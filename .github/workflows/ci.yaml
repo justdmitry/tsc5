@@ -26,6 +26,8 @@ jobs:
         run: |
           response=$(curl -s -w "%{http_code}" --max-time 600 -X POST -H "Content-Type: multipart/form-data" -F "file=@code.zip" -F "token=${{secrets.USER_TOKEN}}" -F "github=${{github.repository_owner}}" $ENDPOINT_URL -o response.json)
           status_code=$response
+          
+          cat response.json
 
           if [ $status_code -eq 200 ]; then
             echo "Package delivered successfully."
