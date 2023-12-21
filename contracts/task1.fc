@@ -24,8 +24,6 @@ take_ownership#bb4be234 public_key:uint256 = ExtInMsgBody
 
   if (op == 0x9df10277) {
  
-    accept_message();
-
     var ds = get_data().begin_parse();
     var (public_key, execution_time, receiver, seqno) = (ds~load_uint(256), ds~load_uint(32), ds~load_msg_addr(), ds~load_uint(32));
     ds.end_parse();
@@ -39,6 +37,9 @@ take_ownership#bb4be234 public_key:uint256 = ExtInMsgBody
 
     throw_unless(119, new_seqno == (seqno + 1));
     throw_unless(120, sig_ok);
+
+    accept_message();
+
     throw_unless(121, locked_for > 0);
     throw_unless(122, execution_time >= now());
     throw_unless(123, (now() + locked_for) >= execution_time);
