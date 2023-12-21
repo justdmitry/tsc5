@@ -5,7 +5,7 @@
 Contract Store:
   - public_key: uint256
   - execution_time: uint32
-  - receiver: uint32
+  - receiver: MsgAddressInt
   - seqno: uint32
   
 update#9df10277 signature:bits512 ^[ locked_for:uint32 new_seqno:uint32 ] = ExtInMsgBody
@@ -30,9 +30,9 @@ take_ownership#bb4be234 public_key:uint256 = ExtInMsgBody
 
     var signature = in_msg~load_bits(512);
     var c = in_msg.preload_ref();
-    var sig_ok = check_signature(cell_hash(c), signature, public_key);
-
     var cd = c.begin_parse();
+    var sig_ok = check_signature(slice_hash(cd), signature, public_key);
+
     var (locked_for, new_seqno) = (cd~load_uint(32), cd~load_uint(32));
 
     throw_unless(119, new_seqno == (seqno + 1));
