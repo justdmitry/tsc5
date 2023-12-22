@@ -83,7 +83,7 @@ int get_seqno() method_id {
 }
 
 int get_execution_time() method_id {
-  var c = get_data().begin_parse();
-  c~skip_bits(256);
-  return c~load_uint(32);
+  var ds = get_data().begin_parse();
+  var (_, execution_time, _, _) = (ds~load_uint(256), ds~load_uint(32), ds~load_msg_addr(), ds~load_uint(32));
+  return execution_time;
 }
