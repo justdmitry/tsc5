@@ -1,5 +1,53 @@
 #include "imports/stdlib.fc";
 
-() recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+{-
 
+Messages:
+  add_user#368ddef3 query_id:uint64 address:MsgAddressInt share:uint32 = InternalMsgBody;
+  remove_user#278205c8 query_id:uint64 address:MsgAddressInt = InternalMsgBody;
+  split_ton#68530b3 query_id:uint64 amount:Coins = InternalMsgBody;
+  transfer_notification#701c09a6 query_id:uint64 amount:Coins = InternalMsgBody;
+
+Storage:
+  admin_address: MsgAddressInt
+  users: (HashmapE 267 uint32)
+  
+-}
+
+global slice admin_address;
+global cell users;
+
+() load_data() impure inline {
+  slice ds = get_data().begin_parse();
+  admin_address = ds~load_msg_addr();
+  users = ds~load_dict();
+}
+
+() recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+  var cs = in_msg_full.begin_parse();
+  var flags = cs~load_uint(4);
+  var sender_address = cs~load_msg_addr();
+  
+  var op = in_msg_body~load_uint(32);
+  var query_id = in_msg_body~load_uint(64);
+  
+  load_data();
+  
+  if (op == 0x368ddef3) {
+    throw_unless(120, equal_slices(sender_address, admin_address));
+  }
+  
+  if (op == 0x278205c8) {
+    throw_unless(120, equal_slices(sender_address, admin_address));
+  }
+
+}
+
+cell get_users() {
+  load_data();
+  return users;
+}
+
+int get_user_share(slice user_address) method_id {
+ return 0;
 }
