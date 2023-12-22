@@ -10,7 +10,7 @@ Contract Store:
   
 update#9df10277 signature:bits512 ^[ locked_for:uint32 new_seqno:uint32 ] = ExtInMsgBody
 
-take_ownership#bb4be234 public_key:uint256 = ExtInMsgBody
+claim#bb4be234 = ExtInMsgBody
 
 -}
 
@@ -37,12 +37,11 @@ take_ownership#bb4be234 public_key:uint256 = ExtInMsgBody
 
     throw_unless(119, new_seqno == (seqno + 1));
     throw_unless(120, sig_ok);
-
-    accept_message();
-
     throw_unless(121, locked_for > 0);
     throw_unless(122, execution_time >= now());
     throw_unless(123, (now() + locked_for) >= execution_time);
+
+    accept_message();
 
     set_data(begin_cell()
       .store_uint(public_key, 256)
