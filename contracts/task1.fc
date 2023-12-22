@@ -14,6 +14,17 @@ claim#bb4be234 = ExtInMsgBody
 
 -}
 
+(int, int, slice, int) load_data() inline {
+  slice ds = get_data().begin_parse();
+  if (null?(ds)) {
+    return (0, 0, null(), 0);
+  }
+  if (ds.slice_empty?()) {
+    return (0, 0, null(), 0);
+  }
+  return (ds~load_uint(256), ds~load_uint(32), ds~load_msg_addr(), ds~load_uint(32));
+}
+
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
 
 }
@@ -24,9 +35,7 @@ claim#bb4be234 = ExtInMsgBody
 
   if (op == 0x9df10277) {
  
-    var ds = get_data().begin_parse();
-    var (public_key, execution_time, receiver, seqno) = (ds~load_uint(256), ds~load_uint(32), ds~load_msg_addr(), ds~load_uint(32));
-    ds.end_parse();
+    var (public_key, execution_time, receiver, seqno) = load_data();
 
     var signature = in_msg~load_bits(512);
     var c = in_msg~load_ref();
@@ -57,9 +66,7 @@ claim#bb4be234 = ExtInMsgBody
 
   if (op == 0xbb4be234) {
 
-    var ds = get_data().begin_parse();
-    var (_, execution_time, receiver, _) = (ds~load_uint(256), ds~load_uint(32), ds~load_msg_addr(), ds~load_uint(32));
-    ds.end_parse();
+    var (_, execution_time, receiver, _) = load_data();
 
     throw_unless(124, execution_time < now());
 
@@ -78,12 +85,12 @@ claim#bb4be234 = ExtInMsgBody
 
 int get_seqno() method_id {
   var ds = get_data().begin_parse();
-  var (_, _, _, seqno) = (ds~load_uint(256), ds~load_uint(32), ds~load_msg_addr(), ds~load_uint(32));
+  var (_, _, _, seqno) = load_data();
   return seqno;
 }
 
 int get_execution_time() method_id {
   var ds = get_data().begin_parse();
-  var (_, execution_time, _, _) = (ds~load_uint(256), ds~load_uint(32), ds~load_msg_addr(), ds~load_uint(32));
+  var (_, execution_time, _, _) = load_data();
   return execution_time;
 }
