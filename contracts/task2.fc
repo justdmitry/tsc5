@@ -14,6 +14,8 @@ Storage:
   
 -}
 
+int equal_slices(slice a, slice b) asm "SDEQ";
+
 global slice admin_address;
 global cell users;
 
