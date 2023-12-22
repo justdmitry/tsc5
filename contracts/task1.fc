@@ -15,13 +15,7 @@ claim#bb4be234 = ExtInMsgBody
 -}
 
 (int, int, slice, int) load_data() inline {
-  slice ds = get_data().begin_parse();
-  if (null?(ds)) {
-    return (0, 0, null(), 0);
-  }
-  if (ds.slice_empty?()) {
-    return (0, 0, null(), 0);
-  }
+  var ds = get_data().begin_parse();
   return (ds~load_uint(256), ds~load_uint(32), ds~load_msg_addr(), ds~load_uint(32));
 }
 
@@ -60,37 +54,15 @@ claim#bb4be234 = ExtInMsgBody
       .store_slice(receiver)
       .store_uint(new_seqno, 32)
       .end_cell());
-      
-    return();
-  }
-
-  if (op == 0xbb4be234) {
-
-    var (_, execution_time, receiver, _) = load_data();
-
-    throw_unless(124, execution_time < now());
-
-    var msg = begin_cell()
-      .store_uint(0x18, 6)
-      .store_slice(receiver)
-      .store_coins(0)
-      .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-      .end_cell();
-      
-    send_raw_message(msg, 128);
-    
-    return();
   }
 }
 
 int get_seqno() method_id {
-  var ds = get_data().begin_parse();
   var (_, _, _, seqno) = load_data();
   return seqno;
 }
 
 int get_execution_time() method_id {
-  var ds = get_data().begin_parse();
   var (_, execution_time, _, _) = load_data();
   return execution_time;
 }
