@@ -39,15 +39,15 @@ claim#bb4be234 = ExtInMsgBody
     throw_unless(120, sig_ok);
     throw_unless(121, locked_for > 0);
     throw_if(122, execution_time < now());
-    throw_if(123, now() + locked_for < execution_time);
+    
+    var new_execution_time = now() + locked_for;
+    throw_if(123, new_execution_time < execution_time);
 
     accept_message();
 
-    execution_time = now() + locked_for;
-
     set_data(begin_cell()
       .store_uint(public_key, 256)
-      .store_uint(execution_time, 32)
+      .store_uint(new_execution_time, 32)
       .store_slice(receiver)
       .store_uint(new_seqno, 32)
       .end_cell());
