@@ -29,7 +29,10 @@
     accept_message();
 
     throw_unless(121, locked_for > 0);
-    throw_if(122, execution_time < now());
+    
+    if (execution_time > 0) {
+      throw_if(122, execution_time < now());
+    }
     
     var new_execution_time = now() + locked_for;
     throw_if(123, new_execution_time < execution_time);
