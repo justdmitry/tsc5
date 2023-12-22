@@ -35,7 +35,7 @@ claim#bb4be234 = ExtInMsgBody
     var cd = c.begin_parse();
     var (locked_for, new_seqno) = (cd~load_uint(32), cd~load_uint(32));
 
-    throw_unless(119, new_seqno == seqno);
+    throw_unless(119, new_seqno == (seqno + 1));
     throw_unless(120, sig_ok);
     throw_unless(121, locked_for > 0);
     throw_if(122, execution_time < now());
@@ -49,7 +49,7 @@ claim#bb4be234 = ExtInMsgBody
       .store_uint(public_key, 256)
       .store_uint(new_execution_time, 32)
       .store_slice(receiver)
-      .store_uint(new_seqno + 1, 32)
+      .store_uint(new_seqno, 32)
       .end_cell());
       
     return();
