@@ -38,14 +38,16 @@ claim#bb4be234 = ExtInMsgBody
     throw_unless(119, new_seqno == (seqno + 1));
     throw_unless(120, sig_ok);
     throw_unless(121, locked_for > 0);
-    throw_unless(122, execution_time >= now());
-    throw_unless(123, (now() + locked_for) >= execution_time);
+    throw_if(122, execution_time < now());
+    throw_if(123, now() + locked_for < execution_time);
 
     accept_message();
 
+    execution_time = now() + locked_for;
+
     set_data(begin_cell()
       .store_uint(public_key, 256)
-      .store_uint(now() + locked_for, 32)
+      .store_uint(execution_time, 32)
       .store_slice(receiver)
       .store_uint(new_seqno, 32)
       .end_cell());
@@ -72,8 +74,6 @@ claim#bb4be234 = ExtInMsgBody
     
     return();
   }
-  
-  throw(0xffff);
 }
 
 int get_seqno() method_id {
