@@ -40,13 +40,14 @@ claim#bb4be234 = ExtInMsgBody
 
     throw_unless(119, new_seqno == (seqno + 1));
     throw_unless(120, sig_ok);
+
+    accept_message();
+
     throw_unless(121, locked_for > 0);
     throw_if(122, execution_time < now());
     
     var new_execution_time = now() + locked_for;
     throw_if(123, new_execution_time < execution_time);
-
-    accept_message();
 
     set_data(begin_cell()
       .store_uint(public_key, 256)
@@ -54,6 +55,26 @@ claim#bb4be234 = ExtInMsgBody
       .store_slice(receiver)
       .store_uint(new_seqno, 32)
       .end_cell());
+      
+    return();
+  }
+
+  if (op == 0xbb4be234) {
+
+    var (_, execution_time, receiver, _) = load_data();
+
+    throw_unless(124, execution_time < now());
+
+    var msg = begin_cell()
+      .store_uint(0x18, 6)
+      .store_slice(receiver)
+      .store_coins(0)
+      .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+      .end_cell();
+      
+    send_raw_message(msg, 128);
+    
+    return();
   }
 }
 
