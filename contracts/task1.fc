@@ -29,7 +29,7 @@ claim#bb4be234 = ExtInMsgBody
     ds.end_parse();
 
     var signature = in_msg~load_bits(512);
-    var c = in_msg.preload_ref();
+    var c = in_msg~load_ref();
     var sig_ok = check_signature(cell_hash(c), signature, public_key);
 
     var cd = c.begin_parse();
