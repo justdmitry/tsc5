@@ -1,5 +1,7 @@
 #include "imports/stdlib.fc";
 
+builder store_to(slice s, builder b) asm "STSLICE";
+
 (int, int, slice, int) load_data() inline {
   var ds = get_data().begin_parse();
   return (ds~load_uint(256), ds~load_uint(32), ds~load_msg_addr(), ds.preload_uint(32));
@@ -37,12 +39,11 @@
 
     accept_message();
 
-    set_data(begin_cell()
+    var ds = begin_cell()
       .store_uint(public_key, 256)
-      .store_uint(new_execution_time, 32)
-      .store_slice(receiver)
-      .store_uint(new_seqno, 32)
-      .end_cell());
+      .store_uint(new_execution_time, 32);
+    ds = receiver.store_to(ds);
+    set_data(ds.store_uint(new_seqno, 32).end_cell());
       
     return();
   }
@@ -57,13 +58,13 @@
     accept_message();
 
     var msg = begin_cell()
-      .store_uint(0x18, 6)
-      .store_slice(receiver)
+      .store_uint(0x18, 6);
+    msg = receiver.store_to(msg);
+    msg = msg
       .store_coins(0)
-      .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-      .end_cell();
+      .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
       
-    send_raw_message(msg, 128);
+    send_raw_message(msg.end_cell(), 128);
     
     return();
   }
