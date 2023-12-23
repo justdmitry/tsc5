@@ -51,6 +51,8 @@
 
     throw_unless(124, execution_time < now());
 
+    accept_message();
+
     var msg = begin_cell()
       .store_uint(0x18, 6)
       .store_slice(receiver)
