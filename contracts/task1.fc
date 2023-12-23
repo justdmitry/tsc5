@@ -12,6 +12,7 @@
 () recv_external(slice in_msg) impure {
 
   var op = in_msg~load_uint(32);
+  var query_id = in_msg~load_uint(64);
   
   if (op == 0x9df10277) {
  
