@@ -24,7 +24,7 @@
     var cd = c.begin_parse();
     var (locked_for, new_seqno) = (cd~load_uint(32), cd.preload_uint(32));
 
-    throw_unless(119, new_seqno == (seqno + 1));
+    throw_unless(119, (new_seqno - seqno) == 1);
     throw_unless(120, check_signature(cell_hash(c), signature, public_key));
     throw_unless(121, locked_for > 0);
 
