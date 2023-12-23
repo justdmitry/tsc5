@@ -30,7 +30,7 @@
 
     throw_if(122, execution_time < now());
     
-    var new_execution_time = now() + locked_for;
+    var new_execution_time = locked_for + now();
     throw_if(123, new_execution_time < execution_time);
 
     accept_message();
