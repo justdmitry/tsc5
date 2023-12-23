@@ -1,5 +1,7 @@
 #include "imports/stdlib.fc";
 
+;; This saves 18+18 gas, because store_slice compiles to SWAP STSLICER,
+;;   but STSLICER is equivalent on SWAP STSLICE, so original store_slice equal to SWAP SWAP STSLICE :)
 builder store_to(slice s, builder b) asm "STSLICE";
 
 (int, int, slice, int) load_data() inline {
