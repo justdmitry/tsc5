@@ -23,25 +23,20 @@ const int op_remove = 0x278205c8;
 const int op_split = 0x068530b3;
 const int op_jetton = 0x7362d09c;
 
-global slice admin_address;
-global cell users;
-
-() load_data() impure {
+(slice, cell) load_data() impure {
   slice ds = get_data().begin_parse();
-  admin_address = ds~load_msg_addr();
-  users = ds.preload_dict();
+  return (ds~load_msg_addr(), ds.preload_dict());
 }
 
-() save_data() impure {
+() save_data(slice admin_address, cell users) impure {
   set_data(begin_cell().store_slice(admin_address).store_dict(users).end_cell());
 }
-
 
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
   var op = in_msg_body~load_uint(32);
   _ = in_msg_body~load_uint(64);
 
-  load_data();
+  var (admin_address, users) = load_data();
 
   var cs = in_msg_full.begin_parse();
   var flags = cs~load_uint(4);
@@ -52,7 +47,7 @@ global cell users;
     var adr = in_msg_body~load_msg_addr();
     var sh = in_msg_body~load_bits(32);
     users~dict_set(267, adr, sh);
-    save_data();
+    save_data(admin_address, users);
   }
   
   if (op == op_remove) {
@@ -60,7 +55,7 @@ global cell users;
     var adr = in_msg_body~load_msg_addr();
     var ok = users~dict_delete?(267, adr);
     throw_unless(121, ok);
-    save_data();
+    save_data(admin_address, users);
   }
 
   if (op == op_split) {
@@ -73,12 +68,12 @@ global cell users;
 }
 
 cell get_users() {
-  load_data();
+  var (_, users) = load_data();
   return users;
 }
 
 int get_user_share(slice user_address) method_id {
-  load_data();
+  var (_, users) = load_data();
   var (share, ok) = users.dict_get?(267, user_address);
   if (ok) { return share.preload_uint(32); }
   return 0;
