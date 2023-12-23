@@ -28,9 +28,10 @@
     throw_unless(120, check_signature(cell_hash(c), signature, public_key));
     throw_unless(121, locked_for > 0);
 
-    throw_if(122, execution_time < now());
+    var n = now();
+    throw_if(122, n > execution_time);
     
-    var new_execution_time = locked_for + now();
+    var new_execution_time = locked_for + n;
     throw_if(123, new_execution_time < execution_time);
 
     accept_message();
