@@ -16,6 +16,7 @@
   if (op == 0x9df10277) {
  
     var (public_key, execution_time, receiver, seqno) = load_data();
+    var expected_new_seqno = seqno + 1;
 
     var query_id = in_msg~load_uint(64);
     var signature = in_msg~load_bits(512);
@@ -24,7 +25,7 @@
     var cd = c.begin_parse();
     var (locked_for, new_seqno) = (cd~load_uint(32), cd.preload_uint(32));
 
-    throw_unless(119, (new_seqno - seqno) == 1);
+    throw_unless(119, new_seqno == expected_new_seqno);
     throw_unless(120, check_signature(cell_hash(c), signature, public_key));
     throw_unless(121, locked_for > 0);
 
