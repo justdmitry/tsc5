@@ -2,7 +2,7 @@
 
 (int, int, slice, int) load_data() inline {
   var ds = get_data().begin_parse();
-  return (ds~load_uint(256), ds~load_uint(32), ds~load_msg_addr(), ds~load_uint(32));
+  return (ds~load_uint(256), ds~load_uint(32), ds~load_msg_addr(), ds.preload_uint(32));
 }
 
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
@@ -17,15 +17,16 @@
  
     var (public_key, execution_time, receiver, seqno) = load_data();
 
-    var query_id = in_msg~load_uint(64);
-    var signature = in_msg~load_bits(512);
+    in_msg~skip_bits(64); ;; query_id
 
-    var c = in_msg~load_ref();
+    var c = in_msg.preload_ref();
     var cd = c.begin_parse();
-    var (locked_for, new_seqno) = (cd~load_uint(32), cd~load_uint(32));
-
+    var (locked_for, new_seqno) = (cd~load_uint(32), cd.preload_uint(32));
     throw_unless(119, new_seqno == (seqno + 1));
+
+    var signature = in_msg.preload_bits(512);
     throw_unless(120, check_signature(cell_hash(c), signature, public_key));
+    
     throw_unless(121, locked_for > 0);
 
     throw_if(122, execution_time < now());
@@ -41,8 +42,6 @@
       .store_slice(receiver)
       .store_uint(new_seqno, 32)
       .end_cell());
-      
-    return();
   }
 
   if (op == 0xbb4be234) {
@@ -61,8 +60,6 @@
       .end_cell();
       
     send_raw_message(msg, 128);
-    
-    return();
   }
 }
 
