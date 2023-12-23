@@ -67,8 +67,7 @@
 }
 
 int get_seqno() method_id {
-  var (_, _, _, seqno) = load_data();
-  return seqno;
+  return get_data().begin_parse().slice_last(32).preload_uint(32);
 }
 
 int get_execution_time() method_id {
