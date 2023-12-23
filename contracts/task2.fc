@@ -16,7 +16,12 @@ Storage:
 
 int equal_slices(slice a, slice b) asm "SDEQ";
 (slice, int) dict_get?(cell dict, int key_len, slice index) asm(index dict key_len) "DICTGET" "NULLSWAPIFNOT";
-(cell, int) dict_delete?(cell dict, int key_len, slice index) asm(index dict key_len) "DICTDEL";
+(cell, int) ~dict_delete?(cell dict, int key_len, slice index) asm(index dict key_len) "DICTDEL";
+
+const int op_add = 0x368ddef3;
+const int op_remove = 0x278205c8;
+const int op_split = 0x068530b3;
+const int op_jetton = 0x7362d09c;
 
 global slice admin_address;
 global cell users;
@@ -24,7 +29,7 @@ global cell users;
 () load_data() impure {
   slice ds = get_data().begin_parse();
   admin_address = ds~load_msg_addr();
-  users = ds~load_dict();
+  users = ds.preload_dict();
 }
 
 () save_data() impure {
@@ -33,16 +38,16 @@ global cell users;
 
 
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+  var op = in_msg_body~load_uint(32);
+  _ = in_msg_body~load_uint(64);
+
+  load_data();
+
   var cs = in_msg_full.begin_parse();
   var flags = cs~load_uint(4);
   var sender_address = cs~load_msg_addr();
   
-  var op = in_msg_body~load_uint(32);
-  var query_id = in_msg_body~load_uint(64);
-  
-  load_data();
-  
-  if (op == 0x368ddef3) {
+  if (op == op_add) {
     throw_unless(120, equal_slices(sender_address, admin_address));
     var adr = in_msg_body~load_msg_addr();
     var sh = in_msg_body~load_bits(32);
@@ -50,7 +55,7 @@ global cell users;
     save_data();
   }
   
-  if (op == 0x278205c8) {
+  if (op == op_remove) {
     throw_unless(120, equal_slices(sender_address, admin_address));
     var adr = in_msg_body~load_msg_addr();
     var ok = users~dict_delete?(267, adr);
@@ -58,6 +63,13 @@ global cell users;
     save_data();
   }
 
+  if (op == op_split) {
+    throw(122);
+  }
+
+  if (op == op_jetton) {
+    throw(122);
+  }
 }
 
 cell get_users() {
