@@ -12,12 +12,12 @@
 () recv_external(slice in_msg) impure {
 
   var op = in_msg~load_uint(32);
-  var query_id = in_msg~load_uint(64);
   
   if (op == 0x9df10277) {
  
     var (public_key, execution_time, receiver, seqno) = load_data();
 
+    var query_id = in_msg~load_uint(64);
     var signature = in_msg~load_bits(512);
 
     var c = in_msg~load_ref();
@@ -26,9 +26,6 @@
 
     throw_unless(119, new_seqno == (seqno + 1));
     throw_unless(120, check_signature(cell_hash(c), signature, public_key));
-
-    accept_message();
-
     throw_unless(121, locked_for > 0);
     
     if (execution_time > 0) {
@@ -37,6 +34,8 @@
     
     var new_execution_time = now() + locked_for;
     throw_if(123, new_execution_time < execution_time);
+
+    accept_message();
 
     set_data(begin_cell()
       .store_uint(public_key, 256)
