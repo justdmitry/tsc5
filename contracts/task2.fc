@@ -4,11 +4,11 @@ int equal_slices(slice a, slice b) asm "SDEQ";
 
 (slice, cell) load_data() impure {
   slice ds = get_data().begin_parse();
-  return (ds~load_msg_addr(), ds.preload_ref());
+  return (ds~load_msg_addr(), ds.preload_dict());
 }
 
 () save_data(slice admin_address, cell users) impure {
-  set_data(begin_cell().store_slice(admin_address).store_ref(users).end_cell());
+  set_data(begin_cell().store_slice(admin_address).store_dict(users).end_cell());
 }
 
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
