@@ -60,10 +60,10 @@ cell get_users() {
   return users;
 }
 
-int get_user_share(slice user_address) method_id {
+slice get_user_share(slice user_address) method_id {
   var (wc, bits) = parse_std_addr(user_address);
   var (_, users) = load_data();
   var (share, ok) = users.udict_get?(256, bits);
-  if (ok) { return share.preload_uint(32); }
-  return 0;
+  if (ok) { return share; }
+  return null();
 }
