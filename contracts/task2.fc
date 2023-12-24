@@ -27,8 +27,10 @@ int equal_slices(slice a, slice b) asm "SDEQ";
   if (op == 0x368ddef3) {
     throw_unless(120, equal_slices(sender_address, admin_address));
     _ = in_msg_body~load_uint(64);
-    var (wc, bits) = parse_std_addr(in_msg_body~load_msg_addr());
-    users~udict_set(256, bits, in_msg_body.preload_bits(32));
+    var adr = in_msg_body~load_msg_addr();
+    var share = in_msg_body~load_uint(32);
+    var (wc, bits) = parse_std_addr(adr);
+    users~udict_set(256, bits, begin_cell().store_uint(share, 32).end_cell().begin_parse());
     save_data(admin_address, users);
   }
   
