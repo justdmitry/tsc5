@@ -30,6 +30,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     var (wc, bits) = parse_std_addr(in_msg_body~load_msg_addr());
     users~udict_set(256, bits, in_msg_body);
     save_data(admin_address, users);
+    return();
   }
   
   ;; remove_user#278205c8 query_id:uint64 address:MsgAddressInt = InternalMsgBody;
@@ -40,6 +41,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     var ok = users~udict_delete?(256, bits);
     throw_unless(121, ok);
     save_data(admin_address, users);
+    return();
   }
 
   ;; split_ton#68530b3 query_id:uint64 amount:Coins = InternalMsgBody;
@@ -51,6 +53,8 @@ int equal_slices(slice a, slice b) asm "SDEQ";
   if (op == 0x7362d09c) {
     throw(122);
   }
+  
+  throw(0xffff);
 }
 
 cell get_users() {
