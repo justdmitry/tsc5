@@ -28,7 +28,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     throw_unless(120, equal_slices(sender_address, admin_address));
     _ = in_msg_body~load_uint(64);
     var (wc, bits) = parse_std_addr(in_msg_body~load_msg_addr());
-    users~udict_set(256, bits, in_msg_body);
+    users~udict_set(256, bits, in_msg_body.preload_bits(32));
     save_data(admin_address, users);
   }
   
