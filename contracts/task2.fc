@@ -21,6 +21,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
 
 (int) get_total(int total, cell users) {
   if (total < 0) {
+    total = 0;
     var (k, sh, eod) = users.udict_get_min?(256);
     do {
       total += sh.preload_uint(32);
