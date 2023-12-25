@@ -4,7 +4,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
 
 (slice, cell) load_data() inline {
   slice ds = get_data().begin_parse();
-  return (ds~load_msg_addr(), ds.preload_dict());
+  return (ds~load_msg_addr(), ds~load_dict());
 }
 
 () save_data(slice admin_address, cell users) inline {
