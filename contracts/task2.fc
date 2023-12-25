@@ -8,13 +8,30 @@ int equal_slices(slice a, slice b) asm "SDEQ";
   return ds.preload_dict();
 }
 
-(slice, cell) load_data() inline {
+(slice, cell, int) load_all_data() inline {
   slice ds = get_data().begin_parse();
-  return (ds~load_msg_addr(), ds~load_dict());
+  var a = ds~load_msg_addr();
+  var d = ds~load_dict();
+  var t = -1;
+  if (ds.slice_bits()) {
+    t = ds.preload_int(64);
+  }
+  return (a, d, t);
 }
 
-() save_data(slice admin_address, cell users) impure inline {
-  set_data(begin_cell().store_slice(admin_address).store_dict(users).end_cell());
+(int) get_total(int total, cell users) {
+  if (total < 0) {
+    var (k, sh, eod) = users.udict_get_min?(256);
+    do {
+      total += sh.preload_uint(32);
+      (k, sh, eod) = users.udict_get_next?(256, k); 
+    } until (eod == 0);
+  }
+  return total;
+}
+
+() save_data(slice admin_address, cell users, int total) impure inline {
+  set_data(begin_cell().store_slice(admin_address).store_dict(users).store_int(total, 64).end_cell());
 }
 
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
@@ -27,7 +44,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
   
   var sender_address = cs~load_msg_addr();
 
-  var (admin_address, users) = load_data();
+  var (admin_address, users, total) = load_all_data();
 
   var bs = in_msg_body;
   var (op, _) = (bs~load_uint(32), bs~load_uint(64));      ;; op and query_id
@@ -37,8 +54,15 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     throw_unless(120, equal_slices(sender_address, admin_address));
     var adr = bs~load_msg_addr();
     var (_, bits) = parse_std_addr(adr);
+    if (total >= 0) {
+      var (old, ok) = users.udict_get?(256, bits);
+      if (ok) {
+        total -= old.preload_uint(32);
+      }
+      total += bs.preload_uint(32);
+    }
     users~udict_set(256, bits, bs);
-    save_data(admin_address, users);
+    save_data(admin_address, users, total);
     return();
   }
   
@@ -46,9 +70,12 @@ int equal_slices(slice a, slice b) asm "SDEQ";
   if (op == 0x278205c8) {
     throw_unless(120, equal_slices(sender_address, admin_address));
     var (_, bits) = parse_std_addr(bs~load_msg_addr());
-    var ok = users~udict_delete?(256, bits);
+    var (share, ok) = users~udict_delete_get?(256, bits);
     throw_unless(121, ok);
-    save_data(admin_address, users);
+    if (total >= 0) {
+      total -= share.preload_uint(32);
+    }
+    save_data(admin_address, users, total);
     return();
   }
 
@@ -59,16 +86,9 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     _ = cs~load_msg_addr(); ;; dest
     var coins = cs~load_coins();
     
-    ;; find total
-    var total = 0;
-    var (k, sh, eod) = users.udict_get_min?(256);
-    do {
-      total += sh.preload_uint(32);
-      (k, sh, eod) = users.udict_get_next?(256, k); 
-    } until (eod == 0);
+    total = get_total(total, users);
 
-    ;; send
-    (k, sh, eod) = users.udict_get_min?(256);
+    var (k, sh, eod) = users.udict_get_min?(256);
     do {
       var share = sh.preload_uint(32);
       var to_send = share * coins / total;
@@ -93,16 +113,9 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     
     var coins = bs~load_coins();
     
-    ;; find total
-    var total = 0;
-    var (k, sh, eod) = users.udict_get_min?(256);
-    do {
-      total += sh.preload_uint(32);
-      (k, sh, eod) = users.udict_get_next?(256, k); 
-    } until (eod == 0);
+    total = get_total(total, users);
 
-    ;; send
-    (k, sh, eod) = users.udict_get_min?(256);
+    var (k, sh, eod) = users.udict_get_min?(256);
     do {
       var share = sh.preload_uint(32);
       var to_send = share * coins / total;
