@@ -71,8 +71,8 @@ int equal_slices(slice a, slice b) asm "SDEQ";
       
       var msg = begin_cell()
         ;; need to store: uint(0x18, 6), then 10 for adr prefix, then 0 for anycast, then 0000_0000 for workchain
-        ;; that's: in binary 010010 10 0 00000000 with len 6+2+1+8=17, and in hex it's 0x9400
-        .store_uint(0x9400, 17)
+        ;; that's: in binary 011000 10 0 00000000 with len 6+2+1+8=17, and in hex it's 0xC400
+        .store_uint(0xC400, 17)
         .store_uint(k, 256)      ;; address bytes (pubkey hash)
         .store_coins(to_send)
         .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
