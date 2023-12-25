@@ -62,7 +62,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     do {
       total += sh.preload_uint(32);
       (k, sh, eod) = users.udict_get_nexteq?(256, k); 
-    } until (eod == 0)
+    } until (eod == 0);
 
     ;; send
     (k, sh, eod) = users.udict_get_min?(256);
@@ -79,7 +79,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
       send_raw_message(msg.end_cell(), 1);
       
       (k, sh, eod) = users.udict_get_nexteq?(256, k); 
-    } until (eod == 0)
+    } until (eod == 0);
   }
 
   ;; transfer_notification#0x7362d09c query_id:uint64 amount:Coins = InternalMsgBody;
