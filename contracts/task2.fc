@@ -102,8 +102,7 @@ forall X -> (tuple, X) uncons_inv(tuple list) asm "UNCONS";
           .store_coins(20000000)                                 ;; 0.02
           .store_uint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1);           ;; body in ref
     var body_header = begin_cell()
-          .store_uint(0x0f8a7ea5, 32)
-          .store_uint(0, 64);                                    ;; and query_id
+          .store_uint(0x0f8a7ea50000000000000000, 32 + 64);      ;; opcode and query_id
 
     do {
       (list, var pair) = uncons_inv(list);
