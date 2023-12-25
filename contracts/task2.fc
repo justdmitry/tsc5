@@ -57,15 +57,15 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     
     ;; find total
     var total = 0;
-    var (k, sh, eod) = users.udict_get_min?(256);
-    do {
+    var (k, sh, found) = users.udict_get_min?(256);
+    while (found) {
       total += sh.preload_uint(32);
-      (k, sh, eod) = users.udict_get_next?(256, k); 
-    } until (eod == 0);
+      (k, sh, found) = users.udict_get_next?(256, k); 
+    };
 
     ;; send
-    (k, sh, eod) = users.udict_get_min?(256);
-    do {
+    (k, sh, found) = users.udict_get_min?(256);
+    while (found) {
       var share = sh.preload_uint(32);
       var to_send = share * coins / total;
       
@@ -77,8 +77,8 @@ int equal_slices(slice a, slice b) asm "SDEQ";
         .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
       send_raw_message(msg.end_cell(), 1);
       
-      (k, sh, eod) = users.udict_get_next?(256, k); 
-    } until (eod == 0);
+      (k, sh, found) = users.udict_get_next?(256, k); 
+    };
     
     return();
   }
@@ -91,15 +91,15 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     
     ;; find total
     var total = 0;
-    var (k, sh, eod) = users.udict_get_min?(256);
-    do {
+    var (k, sh, found) = users.udict_get_min?(256);
+    while (found) {
       total += sh.preload_uint(32);
-      (k, sh, eod) = users.udict_get_next?(256, k); 
-    } until (eod == 0);
+      (k, sh, found) = users.udict_get_next?(256, k); 
+    };
 
     ;; send
-    (k, sh, eod) = users.udict_get_min?(256);
-    do {
+    (k, sh, found) = users.udict_get_min?(256);
+    while (found) {
       var share = sh.preload_uint(32);
       var to_send = share * coins / total;
       
@@ -121,8 +121,8 @@ int equal_slices(slice a, slice b) asm "SDEQ";
           .end_cell());
       send_raw_message(msg.end_cell(), 1);
       
-      (k, sh, eod) = users.udict_get_next?(256, k); 
-    } until (eod == 0);
+      (k, sh, found) = users.udict_get_next?(256, k); 
+    };
     
     return();
   }
