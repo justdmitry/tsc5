@@ -2,6 +2,12 @@
 
 int equal_slices(slice a, slice b) asm "SDEQ";
 
+(cell) load_data_users() inline {
+  var ds = get_data().begin_parse();
+  ds~load_msg_addr();
+  return ds.preload_dict();
+}
+
 (slice, cell) load_data() inline {
   slice ds = get_data().begin_parse();
   return (ds~load_msg_addr(), ds~load_dict());
@@ -131,14 +137,12 @@ int equal_slices(slice a, slice b) asm "SDEQ";
 }
 
 cell get_users() method_id {
-  var (_, users) = load_data();
-  return users;
+  return load_data_users();
 }
 
 int get_user_share(slice user_address) method_id {
   var (wc, bits) = parse_std_addr(user_address);
-  var (_, users) = load_data();
-  var (share, ok) = users.udict_get?(256, bits);
-  if (ok) { return share.preload_uint(32); }
-  return 0;
+  var users = load_data_users();
+  var (share, _) = users.udict_get?(256, bits);                 ;; doc says we will always have user
+  return share.preload_uint(32);
 }
