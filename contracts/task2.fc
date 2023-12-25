@@ -1,9 +1,6 @@
 #include "imports/stdlib.fc";
 
 int equal_slices(slice a, slice b) asm "SDEQ";
-(slice, int) dict_get?(cell dict, int key_len, slice index) asm(index dict key_len) "DICTGET" "NULLSWAPIFNOT";
-(slice, slice, int) dict_get_min?(cell dict, int key_len) asm (-> 1 0 2) "DICTMIN" "NULLSWAPIFNOT2";
-(slice, slice, int) dict_get_next?(cell dict, int key_len, slice pivot) asm(pivot dict key_len -> 1 0 2) "DICTUGETNEXT" "NULLSWAPIFNOT2";
 
 (cell) load_data_users() inline {
   var ds = get_data().begin_parse();
@@ -60,14 +57,14 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     
     ;; find total
     var total = 0;
-    var (k, sh, eod) = users.dict_get_min?(256);
+    var (k, sh, eod) = users.udict_get_min?(256);
     do {
       total += sh.preload_uint(32);
-      (k, sh, eod) = users.dict_get_next?(256, k); 
+      (k, sh, eod) = users.udict_get_next?(256, k); 
     } until (eod == 0);
 
     ;; send
-    (k, sh, eod) = users.dict_get_min?(256);
+    (k, sh, eod) = users.udict_get_min?(256);
     do {
       var share = sh.preload_uint(32);
       var to_send = share * coins / total;
@@ -75,12 +72,12 @@ int equal_slices(slice a, slice b) asm "SDEQ";
       var msg = begin_cell()
         .store_uint(0x18, 6)
         .store_uint(1, 1).store_uint(0, 10)   ;; prefix 10 and anycast 0 and workchain byte 0
-        .store_slice(k)
+        .store_uint(k, 256)
         .store_coins(to_send)
         .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
       send_raw_message(msg.end_cell(), 1);
       
-      (k, sh, eod) = users.dict_get_next?(256, k); 
+      (k, sh, eod) = users.udict_get_next?(256, k); 
     } until (eod == 0);
     
     return();
@@ -94,14 +91,14 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     
     ;; find total
     var total = 0;
-    var (k, sh, eod) = users.dict_get_min?(256);
+    var (k, sh, eod) = users.udict_get_min?(256);
     do {
       total += sh.preload_uint(32);
-      (k, sh, eod) = users.dict_get_next?(256, k); 
+      (k, sh, eod) = users.udict_get_next?(256, k); 
     } until (eod == 0);
 
     ;; send
-    (k, sh, eod) = users.dict_get_min?(256);
+    (k, sh, eod) = users.udict_get_min?(256);
     do {
       var share = sh.preload_uint(32);
       var to_send = share * coins / total;
@@ -116,15 +113,15 @@ int equal_slices(slice a, slice b) asm "SDEQ";
           .store_uint(0x0f8a7ea5, 32)
           .store_uint(0, 64) ;; query_id
           .store_coins(to_send)
-          .store_uint(1, 1).store_uint(0, 10).store_slice(k)     ;; destinations
-          .store_uint(1, 1).store_uint(0, 10).store_slice(k)     ;; response_destination
+          .store_uint(1, 1).store_uint(0, 10).store_uint(k, 256) ;; destinations
+          .store_uint(1, 1).store_uint(0, 10).store_uint(k, 256) ;; response_destination
           .store_uint(0, 1)                                      ;; custom_payload
           .store_coins(1)                                        ;; forward_ton_amount
           .store_uint(0, 1)                                      ;; forward_payload
           .end_cell());
       send_raw_message(msg.end_cell(), 1);
       
-      (k, sh, eod) = users.dict_get_next?(256, k); 
+      (k, sh, eod) = users.udict_get_next?(256, k); 
     } until (eod == 0);
     
     return();
