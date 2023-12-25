@@ -1,8 +1,8 @@
 #include "imports/stdlib.fc";
 
 int equal_slices(slice a, slice b) asm "SDEQ";
-tuple cons_ints(int head, int tail) asm "CONS";
-(int, int) uncons_ints(tuple list) asm "UNCONS";
+forall X -> tuple cons_inv(tuple head, X tail) asm "CONS";
+forall X -> (tuple, X) uncons_inv(tuple list) asm "UNCONS";
 
 (cell) load_data_users() inline {
   var ds = get_data().begin_parse();
@@ -20,8 +20,8 @@ tuple cons_ints(int head, int tail) asm "CONS";
   var (k, sh, found) = users.udict_get_min?(256);
   while (found) {
     var share = sh.preload_uint(32);
+    list = cons_inv(list, pair(k, share));
     total += share;
-    list = cons(pair(k, share), list);
     (k, sh, found) = users.udict_get_next?(256, k); 
   };
   return (total, list);
@@ -73,7 +73,7 @@ tuple cons_ints(int head, int tail) asm "CONS";
     var (total, list) = get_total(users);
 
     do {
-      (var pair, list) = uncons(list);
+      (list, var pair) = uncons_inv(list);
       var (adr, share) = unpair(pair);
       var to_send = muldiv(share, coins, total);
       
@@ -106,7 +106,7 @@ tuple cons_ints(int head, int tail) asm "CONS";
           .store_uint(0, 64);                                    ;; and query_id
 
     do {
-      (var pair, list) = uncons(list);
+      (list, var pair) = uncons_inv(list);
       var (adr, share) = unpair(pair);
       var to_send = muldiv(share, coins, total);
       
