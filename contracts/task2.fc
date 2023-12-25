@@ -108,14 +108,12 @@ int equal_slices(slice a, slice b) asm "SDEQ";
         .store_uint(0x18, 6)
         .store_slice(sender_address)
         .store_coins(20000000)                                   ;; 0.02
-        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1 - 1)          ;; one less, because body in ref!
-        .store_uint(1, 1)                                        ;; body in ref
+        .store_uint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)              ;; body in ref
         .store_ref(begin_cell()
-          .store_uint(0x0f8a7ea5, 32)
-          .store_uint(0, 64) ;; query_id
+          .store_uint(0x0f8a7ea50000000000000000, 32 + 64)       ;; 0x0f8a7ea5 and query_id
           .store_coins(to_send)
-          .store_uint(1, 1).store_uint(0, 10).store_uint(k, 256) ;; destinations
-          .store_uint(1, 1).store_uint(0, 10).store_uint(k, 256) ;; response_destination
+          .store_uint(0x400, 11).store_uint(k, 256)              ;; destinations
+          .store_uint(0x400, 11).store_uint(k, 256)              ;; response_destination
           .store_uint(0, 1)                                      ;; custom_payload
           .store_coins(1)                                        ;; forward_ton_amount
           .store_uint(0, 1)                                      ;; forward_payload
