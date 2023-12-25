@@ -1,6 +1,8 @@
 #include "imports/stdlib.fc";
 
 int equal_slices(slice a, slice b) asm "SDEQ";
+tuple cons_ints(int head, int tail) asm "CONS";
+(int, int) uncons_ints(tuple list) asm "UNCONS";
 
 (cell) load_data_users() inline {
   var ds = get_data().begin_parse();
@@ -57,21 +59,19 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     
     ;; find total
     var total = 0;
-    var addresses = null();
-    var shares = null();
+    var list = null();
     var (k, sh, found) = users.udict_get_min?(256);
     while (found) {
-      addresses = cons(k, addresses);
       var share = sh.preload_uint(32);
-      shares = cons(share, shares);
       total += share;
+      list = cons(pair(k, share), list);
       (k, sh, found) = users.udict_get_next?(256, k); 
     };
 
     ;; send
     do {
-      (k, addresses) = uncons(addresses);
-      (var share, shares) = uncons(shares);
+      (var pair, list) = uncons(list);
+      (k, var share) = unpair(pair);
       var to_send = muldiv(share, coins, total);
       
       var msg = begin_cell()
@@ -82,7 +82,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
         .store_coins(to_send)
         .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
       send_raw_message(msg.end_cell(), 1);
-    } until (null?(addresses));
+    } until (null?(list));
     
     return();
   }
@@ -110,10 +110,8 @@ int equal_slices(slice a, slice b) asm "SDEQ";
       var msg = begin_cell()
         .store_uint(0x18, 6)
         .store_slice(sender_address)
-        ;; next I need:
-        ;;   .store_coins(20000000)                                   ;; 0.02
-        ;;   .store_uint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)              ;; body in ref
-        ;; that is 0100 0000 0001 0011 0001 0010 1101 0000 0000
+        .store_coins(20000000)                                   ;; 0.02
+        .store_uint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)              ;; body in ref
         .store_ref(begin_cell()
           .store_uint(0x0f8a7ea50000000000000000, 32 + 64)       ;; 0x0f8a7ea5 and query_id
           .store_coins(to_send)
