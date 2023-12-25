@@ -104,28 +104,30 @@ tuple cons_ints(int head, int tail) asm "CONS";
     };
 
     ;; send
+    var msg_template = begin_cell()
+          .store_uint(0x18, 6)
+          .store_slice(sender_address)
+          .store_coins(20000000)                                 ;; 0.02
+          .store_uint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1);           ;; body in ref
+    var body_header = begin_cell()
+          .store_uint(0x0f8a7ea5, 32)
+          .store_uint(0, 64);                                    ;; and query_id
     do {
       (var pair, list) = uncons(list);
       (k, var share) = unpair(pair);
       var to_send = muldiv(share, coins, total);
       
-      var msg = begin_cell()
-        .store_uint(0x18, 6)
-        .store_slice(sender_address)
-        .store_coins(20000000)                                   ;; 0.02
-        .store_uint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)              ;; body in ref
-        .store_ref(begin_cell()
-          .store_uint(0x0f8a7ea50000000000000000, 32 + 64)       ;; 0x0f8a7ea5 and query_id
+      var body = body_header
           .store_coins(to_send)
           .store_uint(0x400, 11).store_uint(k, 256)              ;; destinations
           .store_uint(0x400, 11).store_uint(k, 256)              ;; response_destination
           ;; next I need:
-          ;;  .store_uint(0, 1)                                      ;; custom_payload
-          ;;  .store_coins(1)                                        ;; forward_ton_amount
-          ;;  .store_uint(0, 1)                                      ;; forward_payload
+          ;;  .store_uint(0, 1)                                  ;; custom_payload
+          ;;  .store_coins(1)                                    ;; forward_ton_amount
+          ;;  .store_uint(0, 1)                                  ;; forward_payload
           ;; that equals to 0 0001 0000 0001 0, or 0x202
-          .store_uint(0x202, 14)
-          .end_cell());
+          .store_uint(0x202, 14);
+      var msg = msg_template.store_ref(body.end_cell());
       send_raw_message(msg.end_cell(), 1);
       
     } until (null?(list));
