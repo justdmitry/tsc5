@@ -54,7 +54,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
   }
 }
 
-cell get_users() {
+cell get_users() method_id {
   var (_, users) = load_data();
   return users;
 }
