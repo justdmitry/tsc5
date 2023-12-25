@@ -57,21 +57,21 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     
     ;; find total
     var total = 0;
-    var list = null();
+    var addresses = null();
+    var shares = null();
     var (k, sh, found) = users.udict_get_min?(256);
     while (found) {
+      addresses = cons(k, addresses);
       var share = sh.preload_uint(32);
-      list = cons(pair(k, share), list);
+      shares = cons(share, shares);
       total += share;
       (k, sh, found) = users.udict_get_next?(256, k); 
     };
 
     ;; send
-    var pr = pair(0, 0);
-    int share = 0;
     do {
-      (pr, list) = uncons(list);
-      (k, share) = unpair(pr);
+      (k, addresses) = uncons(addresses);
+      (var share, shares) = uncons(shares);
       var to_send = muldiv(share, coins, total);
       
       var msg = begin_cell()
@@ -82,7 +82,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
         .store_coins(to_send)
         .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
       send_raw_message(msg.end_cell(), 1);
-    } until (null?(list));
+    } until (null?(addresses));
     
     return();
   }
