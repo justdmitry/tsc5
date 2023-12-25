@@ -83,8 +83,6 @@ tuple cons_ints(int head, int tail) asm "CONS";
         .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
       send_raw_message(msg.end_cell(), 1);
     } until (null?(list));
-    
-    return();
   }
 
   ;; transfer_notification#0x7362d09c query_id:uint64 amount:Coins = InternalMsgBody;
@@ -131,8 +129,6 @@ tuple cons_ints(int head, int tail) asm "CONS";
       send_raw_message(msg.end_cell(), 1);
       
     } until (null?(list));
-    
-    return();
   }
 }
 
