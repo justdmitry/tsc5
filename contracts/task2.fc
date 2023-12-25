@@ -18,28 +18,26 @@ int equal_slices(slice a, slice b) asm "SDEQ";
 }
 
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+
+  if (in_msg_body.slice_empty?()) { return (); }           ;; ignore empty
+  
   var cs = in_msg_full.begin_parse();
   var flags = cs~load_uint(4);
-  if (flags & 1) { return(); }  ;; ignore bounced
+  if (flags & 1) { return(); }                             ;; ignore bounced
+  
   var sender_address = cs~load_msg_addr();
 
   var (admin_address, users) = load_data();
 
-  if (in_msg_body.slice_empty?()) {
-    return ();
-  }
-  
   var bs = in_msg_body;
-  var op = bs~load_uint(32);
+  var (op, _) = (bs~load_uint(32), bs~load_uint(64));      ;; op and query_id
 
   ;; add_user#368ddef3 query_id:uint64 address:MsgAddressInt share:uint32 = InternalMsgBody;
   if (op == 0x368ddef3) {
     throw_unless(120, equal_slices(sender_address, admin_address));
-    _ = bs~load_uint(64);
     var adr = bs~load_msg_addr();
-    var share = bs~load_uint(32);
-    var (wc, bits) = parse_std_addr(adr);
-    users~udict_set(256, bits, begin_cell().store_uint(share, 32).end_cell().begin_parse());
+    var (_, bits) = parse_std_addr(adr);
+    users~udict_set(256, bits, bs);
     save_data(admin_address, users);
     return();
   }
@@ -47,8 +45,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
   ;; remove_user#278205c8 query_id:uint64 address:MsgAddressInt = InternalMsgBody;
   if (op == 0x278205c8) {
     throw_unless(120, equal_slices(sender_address, admin_address));
-    _ = bs~load_uint(64);
-    var (wc, bits) = parse_std_addr(bs~load_msg_addr());
+    var (_, bits) = parse_std_addr(bs~load_msg_addr());
     var ok = users~udict_delete?(256, bits);
     throw_unless(121, ok);
     save_data(admin_address, users);
@@ -94,7 +91,6 @@ int equal_slices(slice a, slice b) asm "SDEQ";
   if (op == 0x7362d09c) {
     throw_if(122, users.dict_empty?());
     
-    _ = bs~load_uint(64);
     var coins = bs~load_coins();
     
     ;; find total
