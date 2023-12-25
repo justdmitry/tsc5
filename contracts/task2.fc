@@ -80,11 +80,53 @@ int equal_slices(slice a, slice b) asm "SDEQ";
       
       (k, sh, eod) = users.udict_get_nexteq?(256, k); 
     } until (eod == 0);
+    
+    return();
   }
 
   ;; transfer_notification#0x7362d09c query_id:uint64 amount:Coins = InternalMsgBody;
   if (op == 0x7362d09c) {
     throw_if(122, users.dict_empty?());
+    
+    _ = bs~load_uint(64);
+    var coins = bs~load_coins();
+    
+    ;; find total
+    var total = 0;
+    var (k, sh, eod) = users.udict_get_min?(256);
+    do {
+      total += sh.preload_uint(32);
+      (k, sh, eod) = users.udict_get_nexteq?(256, k); 
+    } until (eod == 0);
+
+    ;; send
+    (k, sh, eod) = users.udict_get_min?(256);
+    do {
+      var share = sh.preload_uint(32);
+      var to_send = share * coins / total;
+      
+      var msg = begin_cell()
+        .store_uint(0x18, 6)
+        .store_slice(sender_address)
+        .store_coins(20000000)                                   ;; 0.02
+        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1 - 1)          ;; one less, because body in ref!
+        .store_uint(1, 1)                                        ;; body in ref
+        .store_ref(begin_cell()
+          .store_uint(0x0f8a7ea5, 32)
+          .store_uint(0, 64) ;; query_id
+          .store_coins(to_send)
+          .store_uint(1, 1).store_uint(0, 10).store_uint(k, 256) ;; destinations
+          .store_uint(1, 1).store_uint(0, 10).store_uint(k, 256) ;; response_destination
+          .store_uint(0, 1)                                      ;; custom_payload
+          .store_coins(1)                                        ;; forward_ton_amount
+          .store_uint(0, 1)                                      ;; forward_payload
+          .end_cell());
+      send_raw_message(msg.end_cell(), 1);
+      
+      (k, sh, eod) = users.udict_get_nexteq?(256, k); 
+    } until (eod == 0);
+    
+    return();
   }
 }
 
