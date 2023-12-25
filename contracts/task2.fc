@@ -52,6 +52,34 @@ int equal_slices(slice a, slice b) asm "SDEQ";
   ;; split_ton#68530b3 query_id:uint64 = InternalMsgBody;
   if (op == 0x068530b3) {
     throw_if(122, users.dict_empty?());
+    
+    _ = cs~load_msg_addr(); ;; dest
+    var coins = cs~load_coins();
+    
+    ;; find total
+    var total = 0;
+    var (k, sh, eod) = users.udict_get_min?(256);
+    do {
+      total += sh.preload_uint(32);
+      (k, sh, eod) = users.udict_get_nexteq?(256, k); 
+    } until (eod == 0)
+
+    ;; send
+    (k, sh, eod) = users.udict_get_min?(256);
+    do {
+      var share = sh.preload_uint(32);
+      var to_send = share * coins / total;
+      
+      var msg = begin_cell()
+        .store_uint(0x18, 6)
+        .store_uint(1, 1).store_uint(0, 10)   ;; prefix 10 and anycast 0 and workchain byte 0
+        .store_uint(k, 256)
+        .store_coins(to_send)
+        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
+      send_raw_message(msg.end_cell(), 1);
+      
+      (k, sh, eod) = users.udict_get_nexteq?(256, k); 
+    } until (eod == 0)
   }
 
   ;; transfer_notification#0x7362d09c query_id:uint64 amount:Coins = InternalMsgBody;
