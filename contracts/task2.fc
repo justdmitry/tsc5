@@ -67,7 +67,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     (k, sh, found) = users.udict_get_min?(256);
     while (found) {
       var share = sh.preload_uint(32);
-      var to_send = share * coins / total;
+      var to_send = muldiv(share, coins, total);
       
       var msg = begin_cell()
         ;; need to store: uint(0x18, 6), then 10 for adr prefix, then 0 for anycast, then 0000_0000 for workchain
@@ -102,7 +102,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     (k, sh, found) = users.udict_get_min?(256);
     while (found) {
       var share = sh.preload_uint(32);
-      var to_send = share * coins / total;
+      var to_send = muldiv(share, coins, total);
       
       var msg = begin_cell()
         .store_uint(0x18, 6)
