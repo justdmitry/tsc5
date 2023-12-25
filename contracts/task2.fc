@@ -114,9 +114,12 @@ int equal_slices(slice a, slice b) asm "SDEQ";
           .store_coins(to_send)
           .store_uint(0x400, 11).store_uint(k, 256)              ;; destinations
           .store_uint(0x400, 11).store_uint(k, 256)              ;; response_destination
-          .store_uint(0, 1)                                      ;; custom_payload
-          .store_coins(1)                                        ;; forward_ton_amount
-          .store_uint(0, 1)                                      ;; forward_payload
+          ;; next I need:
+          ;;  .store_uint(0, 1)                                      ;; custom_payload
+          ;;  .store_coins(1)                                        ;; forward_ton_amount
+          ;;  .store_uint(0, 1)                                      ;; forward_payload
+          ;; that equals to 0 0001 0000 0001 0, or 0x202
+          .store_uint(0x202, 14)
           .end_cell());
       send_raw_message(msg.end_cell(), 1);
       
