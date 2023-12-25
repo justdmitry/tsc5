@@ -14,7 +14,7 @@ tuple cons_ints(int head, int tail) asm "CONS";
   set_data(begin_cell().store_slice(admin_address).store_dict(users).end_cell());
 }
 
-(int, tuple) get_total(cell users) {
+(int, tuple) get_total(cell users) inline_ref {
   var total = 0;
   var list = null();
   var (k, sh, found) = users.udict_get_min?(256);
