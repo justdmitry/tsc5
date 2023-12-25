@@ -54,8 +54,6 @@ int equal_slices(slice a, slice b) asm "SDEQ";
   if (op == 0x7362d09c) {
     throw_if(122, users.dict_empty?());
   }
-  
-  throw(0xffff);
 }
 
 cell get_users() method_id {
