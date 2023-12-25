@@ -7,7 +7,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
   return (ds~load_msg_addr(), ds~load_dict());
 }
 
-() save_data(slice admin_address, cell users) inline {
+() save_data(slice admin_address, cell users) impure inline {
   set_data(begin_cell().store_slice(admin_address).store_dict(users).end_cell());
 }
 
