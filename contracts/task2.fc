@@ -61,7 +61,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     var (k, sh, eod) = users.udict_get_min?(256);
     do {
       total += sh.preload_uint(32);
-      (k, sh, eod) = users.udict_get_nexteq?(256, k); 
+      (k, sh, eod) = users.udict_get_next?(256, k); 
     } until (eod == 0);
 
     ;; send
@@ -78,7 +78,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
         .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
       send_raw_message(msg.end_cell(), 1);
       
-      (k, sh, eod) = users.udict_get_nexteq?(256, k); 
+      (k, sh, eod) = users.udict_get_next?(256, k); 
     } until (eod == 0);
     
     return();
@@ -96,7 +96,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
     var (k, sh, eod) = users.udict_get_min?(256);
     do {
       total += sh.preload_uint(32);
-      (k, sh, eod) = users.udict_get_nexteq?(256, k); 
+      (k, sh, eod) = users.udict_get_next?(256, k); 
     } until (eod == 0);
 
     ;; send
@@ -123,7 +123,7 @@ int equal_slices(slice a, slice b) asm "SDEQ";
           .end_cell());
       send_raw_message(msg.end_cell(), 1);
       
-      (k, sh, eod) = users.udict_get_nexteq?(256, k); 
+      (k, sh, eod) = users.udict_get_next?(256, k); 
     } until (eod == 0);
     
     return();
