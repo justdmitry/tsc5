@@ -19,6 +19,10 @@ int equal_slices(slice a, slice b) asm "SDEQ";
 
   var (admin_address, users) = load_data();
 
+  if (in_msg_body.slice_empty?()) {
+    return ();
+  }
+  
   var bs = in_msg_body;
   var op = bs~load_uint(32);
 
