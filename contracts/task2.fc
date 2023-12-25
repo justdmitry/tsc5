@@ -14,6 +14,19 @@ tuple cons_ints(int head, int tail) asm "CONS";
   set_data(begin_cell().store_slice(admin_address).store_dict(users).end_cell());
 }
 
+(int, tuple) get_total(cell users) {
+  var total = 0;
+  var list = null();
+  var (k, sh, found) = users.udict_get_min?(256);
+  while (found) {
+    var share = sh.preload_uint(32);
+    total += share;
+    list = cons(pair(k, share), list);
+    (k, sh, found) = users.udict_get_next?(256, k); 
+  };
+  return (total, list);
+}
+
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
 
   if (in_msg_body.slice_empty?()) { return (); }           ;; ignore empty
@@ -57,28 +70,18 @@ tuple cons_ints(int head, int tail) asm "CONS";
     _ = cs~load_msg_addr(); ;; dest
     var coins = cs~load_coins();
     
-    ;; find total
-    var total = 0;
-    var list = null();
-    var (k, sh, found) = users.udict_get_min?(256);
-    while (found) {
-      var share = sh.preload_uint(32);
-      total += share;
-      list = cons(pair(k, share), list);
-      (k, sh, found) = users.udict_get_next?(256, k); 
-    };
+    var (total, list) = get_total(users);
 
-    ;; send
     do {
       (var pair, list) = uncons(list);
-      (k, var share) = unpair(pair);
+      var (adr, share) = unpair(pair);
       var to_send = muldiv(share, coins, total);
       
       var msg = begin_cell()
         ;; need to store: uint(0x18, 6), then 10 for adr prefix, then 0 for anycast, then 0000_0000 for workchain
         ;; that's: in binary 011000 10 0 00000000 with len 6+2+1+8=17, and in hex it's 0xC400
         .store_uint(0xC400, 17)
-        .store_uint(k, 256)      ;; address bytes (pubkey hash)
+        .store_uint(adr, 256)      ;; address bytes (pubkey hash)
         .store_coins(to_send)
         .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
       send_raw_message(msg.end_cell(), 1);
@@ -91,17 +94,8 @@ tuple cons_ints(int head, int tail) asm "CONS";
     
     var coins = bs~load_coins();
     
-    var total = 0;
-    var list = null();
-    var (k, sh, found) = users.udict_get_min?(256);
-    while (found) {
-      var share = sh.preload_uint(32);
-      total += share;
-      list = cons(pair(k, share), list);
-      (k, sh, found) = users.udict_get_next?(256, k); 
-    };
+    var (total, list) = get_total(users);
 
-    ;; send
     var msg_template = begin_cell()
           .store_uint(0x18, 6)
           .store_slice(sender_address)
@@ -110,15 +104,16 @@ tuple cons_ints(int head, int tail) asm "CONS";
     var body_header = begin_cell()
           .store_uint(0x0f8a7ea5, 32)
           .store_uint(0, 64);                                    ;; and query_id
+
     do {
       (var pair, list) = uncons(list);
-      (k, var share) = unpair(pair);
+      var (adr, share) = unpair(pair);
       var to_send = muldiv(share, coins, total);
       
       var body = body_header
           .store_coins(to_send)
-          .store_uint(0x400, 11).store_uint(k, 256)              ;; destinations
-          .store_uint(0x400, 11).store_uint(k, 256)              ;; response_destination
+          .store_uint(0x400, 11).store_uint(adr, 256)            ;; destinations
+          .store_uint(0x400, 11).store_uint(adr, 256)            ;; response_destination
           ;; next I need:
           ;;  .store_uint(0, 1)                                  ;; custom_payload
           ;;  .store_coins(1)                                    ;; forward_ton_amount
