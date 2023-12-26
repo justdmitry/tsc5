@@ -4,10 +4,183 @@
 
 }
 
+int len(tuple src) asm "TLEN";
+(tuple) cons_int(int a, int b) asm "CONS";
+(int, int) uncons_int(tuple src) asm "UNCONS";
+
+const int path:free  = "."u;  ;; no obstacles
+const int path:obst  = "X"u;  ;; obstacle
+const int path:osup  = "?"u;  ;; obstacle in superposition
+const int path:start = "S"u;  ;; start
+const int path:end   = "E"u;  ;; end
+const int path:path  = "!"u;  ;; path mark
+
+const int weight:free = 1;
+const int weight:osup = 500;
+const int weight:obst = 1000000;
+
+global tuple source_maze;
+global int startX;
+global int startY;
+global int endX;
+global int endY;
+
+global int maxX;
+global int maxY;
+global tuple steps;
+global tuple weights;
+
+forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
+  var res = null();
+  var i = 0;
+  repeat(src.len()) {
+    res~tpush(index == i ? value : src.at(i));
+    i += 1;
+  };
+  return (res, ());
+} 
+
+() prepare(int n, int m, tuple maze) impure {
+  maxY = m;
+  maxX = n;
+  var new_weights = null();
+  int r = 0;
+  repeat(n) {
+    var row = maze.at(r);
+    var newrow = null();
+    int c = 0;
+    repeat(m) {
+      newrow~tpush(0);
+      if (row.at(m) == path:start) {
+        startX = r;
+        startY = c;
+      }
+      if (row.at(m) == path:end) {
+        endX = r;
+        endY = c;
+      }
+      c += 1;
+    }
+    new_weights~tpush(newrow);
+    r += 1;
+  }
+  weights = new_weights;
+  
+  var new_steps = null();
+  new_steps~tpush(cons_int(-1, -1));
+  new_steps~tpush(cons_int(-1,  0));
+  new_steps~tpush(cons_int(-1,  1));
+  new_steps~tpush(cons_int( 0, -1));
+  new_steps~tpush(cons_int( 0,  1));
+  new_steps~tpush(cons_int( 1, -1));
+  new_steps~tpush(cons_int( 1,  0));
+  new_steps~tpush(cons_int( 1,  1));
+  steps = new_steps;
+}
+
+
+(tuple) do_step(tuple locs, int x, int y, int weight) impure {
+  var n = maxX;
+  var m = maxY;
+  var maze = source_maze;
+  var newWeights = weights;
+  var i = 0;
+  repeat(8) {     ;; steps.len
+    var (dx, dy) = uncons_int(steps.at(i));
+    var x2 = x + dx;
+    var y2 = y + dy;
+    ifnot ((x2 < 0) | (y2 < 0) | (x2 >= n) | (y2 >= m)) {
+      var newWeight = weight + weight:free;              ;; always add '1' to know path length
+      var what = maze.at(x2).at(y2);
+      if (what == path:obst) { newWeight += weight:obst; };
+      if (what == path:osup) { newWeight += weight:osup; };
+      ifnot (what == path:start) {
+        var wrow = newWeights.at(x2);
+        var prevWeight = wrow.at(y2);
+        if ((prevWeight == 0) | (prevWeight > newWeight)) {
+          wrow~replace(y2, newWeight);
+          newWeights~replace(x2, wrow);
+          locs.tpush(cons_int(x2, y2));
+        }
+      }
+    }
+  }
+  weights = newWeights;
+  return locs;
+} 
+
+
+(tuple) do_steps(tuple src) impure {
+  var dest = null();
+  var i = 0;
+  repeat(src.len()) {
+    var loc = src.at(i);
+    var (x, y) = uncons_int(loc);
+    var weight = weights.at(x).at(y);
+    dest = do_step(dest, x, y, weight);
+    i += 1;
+  }
+  return dest;
+} 
+
+(tuple) mark_path(tuple maze, int x, int y, int weight) {
+  var n = maxX;
+  var m = maxY;
+  var i = 0;
+  var min = weight;
+  repeat(8) {     ;; steps.len
+    var (dx, dy) = uncons_int(steps.at(i));
+    var x2 = x + dx;
+    var y2 = y + dy;
+    ifnot ((x2 < 0) | (y2 < 0) | (x2 >= n) | (y2 >= m)) {
+      var w = weights.at(x2).at(y2);
+      if (w < min) {
+        min = w;
+      }
+    }
+  }
+  
+  repeat(8) {     ;; steps.len
+    var (dx, dy) = uncons_int(steps.at(i));
+    var x2 = x + dx;
+    var y2 = y + dy;
+    ifnot ((x2 < 0) | (y2 < 0) | (x2 >= n) | (y2 >= m)) {
+      var w = weights.at(x2).at(y2);
+      if (w == min) {
+        var mrow = maze.at(x2);
+        mrow~replace(y2, path:path);
+        maze~replace(x2, mrow);
+        return mark_path(maze, x2, y2, w); 
+      }
+    }
+  }
+  
+  return null();
+}
+
 (int, int, int, tuple) solve(int n, int m, tuple maze) method_id {
-  if ((n == 2) & (m == 2)) {
+  ;; 2x2 is always already solved!
+  if ((n * m) == 4) {
     return (0, 0, 1, maze);
   }
+  
+  source_maze = maze;
 
-  return (0, 0, 0, null());
+  prepare(n, m, maze);
+  
+  ;; solve
+  var locs = empty_tuple();
+  locs~tpush(cons_int(startX, startY));
+  do {
+    locs = do_steps(locs);
+  } until (null?(locs));
+
+  ;; get path metrics
+  var weight = weights.at(endX).at(endY);
+  (var changes, weight) = divmod(weight, weight:obst);
+  (var superpos, var length) = divmod(weight, weight:osup);
+  
+  var solved = mark_path(maze, endX, endY, weight);
+  
+  return (changes, superpos, length, solved);
 }
