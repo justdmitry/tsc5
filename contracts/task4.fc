@@ -41,8 +41,6 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
 } 
 
 () prepare(int n, int m, tuple maze) impure {
-  maxY = m;
-  maxX = n;
   var new_weights = null();
   int r = 0;
   repeat(n) {
@@ -79,11 +77,12 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
 }
 
 
-(tuple) do_step(tuple locs, int x, int y, int weight) impure {
+(tuple) do_step(tuple locs, int x, int y) impure {
   var n = maxX;
   var m = maxY;
   var maze = source_maze;
   var newWeights = weights;
+  var weight = newWeights.at(x).at(y);
   var i = 0;
   repeat(8) {     ;; steps.len
     var (dx, dy) = uncons_int(steps.at(i));
@@ -116,8 +115,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
   repeat(src.len()) {
     var loc = src.at(i);
     var (x, y) = uncons_int(loc);
-    var weight = weights.at(x).at(y);
-    dest = do_step(dest, x, y, weight);
+    dest = do_step(dest, x, y);
     i += 1;
   }
   return dest;
@@ -164,12 +162,14 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
     return (0, 0, 1, maze);
   }
   
+  maxX = n;
+  maxY = m;
   source_maze = maze;
 
   prepare(n, m, maze);
   
   ;; solve
-  var locs = empty_tuple();
+  var locs = null();
   locs~tpush(cons_int(startX, startY));
   do {
     locs = do_steps(locs);
