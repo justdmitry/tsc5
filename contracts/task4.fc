@@ -138,6 +138,10 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
     }
   }
   
+  if (min == 0) {
+    return maze;
+  }
+  
   repeat(8) {     ;; steps.len
     var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
