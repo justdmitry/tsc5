@@ -113,8 +113,6 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
 
 
 (tuple) do_steps(tuple src) impure {
-  ~dump(weights);
-  ~dump(src);
   var dest = empty_tuple();
   var i = 0;
   repeat(src.len()) {
@@ -175,15 +173,8 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
   maxX = n;
   maxY = m;
   source_maze = maze;
-  
-  ~strdump("Input:");
-  ~dump(n);
-  ~dump(m);
-  ~dump(maze);
 
   prepare(n, m, maze);
-  
-  ~strdump("prepare() OK");
   
   ;; solve
   var locs = empty_tuple();
@@ -192,17 +183,12 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
     locs = do_steps(locs);
   } until (locs.len() == 0);
 
-  ~strdump("do_steps() done");
-  ~dump(weights);
-
   ;; get path metrics
   var weight = weights.at(endX).at(endY);
   (var changes, weight) = divmod(weight, weight:obst);
   (var superpos, var length) = divmod(weight, weight:osup);
   
   var solved = mark_path(maze, endX, endY, weight);
-  
-  ~dump(solved);
 
   return (changes, superpos, length, solved);
 }
