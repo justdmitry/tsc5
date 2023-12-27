@@ -91,8 +91,8 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
     var x2 = x + dx;
     var y2 = y + dy;
     ifnot ((x2 < 0) | (y2 < 0) | (x2 >= n) | (y2 >= m)) {
+      var newWeight = weight + weight:free;              ;; always add '1' to know path length
       var what = maze.at(x2).at(y2);
-      var newWeight = weight + weight:free;   ;; always add '1' to know path length
       if (what == path:obst) { newWeight += weight:obst; };
       if (what == path:osup) { newWeight += weight:osup; };
       ifnot (what == path:start) {
