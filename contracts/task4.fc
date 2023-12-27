@@ -31,7 +31,7 @@ global tuple steps;
 global tuple weights;
 
 forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
-  var res = null();
+  var res = empty_tuple();
   var i = 0;
   repeat(src.len()) {
     res~tpush(index == i ? value : src.at(i));
@@ -41,19 +41,21 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
 } 
 
 () prepare(int n, int m, tuple maze) impure {
-  var new_weights = null();
+  var new_weights = empty_tuple();
   int r = 0;
   repeat(n) {
     var row = maze.at(r);
-    var newrow = null();
+    var newrow = empty_tuple();
     int c = 0;
     repeat(m) {
-      newrow~tpush(0);
-      if (row.at(m) == path:start) {
+      var w = 999999999999;
+      if (row.at(c) == path:start) {
         startX = r;
         startY = c;
+        w = 0;
       }
-      if (row.at(m) == path:end) {
+      newrow~tpush(w);
+      if (row.at(c) == path:end) {
         endX = r;
         endY = c;
       }
@@ -64,7 +66,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
   }
   weights = new_weights;
   
-  var new_steps = null();
+  var new_steps = empty_tuple();
   new_steps~tpush(cons_int(-1, -1));
   new_steps~tpush(cons_int(-1,  0));
   new_steps~tpush(cons_int(-1,  1));
@@ -96,13 +98,14 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
       ifnot (what == path:start) {
         var wrow = newWeights.at(x2);
         var prevWeight = wrow.at(y2);
-        if ((prevWeight == 0) | (prevWeight > newWeight)) {
+        if (prevWeight > newWeight) {
           wrow~replace(y2, newWeight);
           newWeights~replace(x2, wrow);
           locs.tpush(cons_int(x2, y2));
         }
       }
     }
+    i += 1;
   }
   weights = newWeights;
   return locs;
@@ -110,7 +113,9 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
 
 
 (tuple) do_steps(tuple src) impure {
-  var dest = null();
+  ~dump(weights);
+  ~dump(src);
+  var dest = empty_tuple();
   var i = 0;
   repeat(src.len()) {
     var loc = src.at(i);
@@ -136,6 +141,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
         min = w;
       }
     }
+    i += 1;
   }
   
   if (min == 0) {
@@ -157,7 +163,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
     }
   }
   
-  return null();
+  return empty_tuple();
 }
 
 (int, int, int, tuple) solve(int n, int m, tuple maze) method_id {
@@ -169,15 +175,25 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
   maxX = n;
   maxY = m;
   source_maze = maze;
+  
+  ~strdump("Input:");
+  ~dump(n);
+  ~dump(m);
+  ~dump(maze);
 
   prepare(n, m, maze);
   
+  ~strdump("prepare() OK");
+  
   ;; solve
-  var locs = null();
+  var locs = empty_tuple();
   locs~tpush(cons_int(startX, startY));
   do {
     locs = do_steps(locs);
-  } until (null?(locs));
+  } until (locs.len() == 0);
+
+  ~strdump("do_steps() done");
+  ~dump(weights);
 
   ;; get path metrics
   var weight = weights.at(endX).at(endY);
@@ -186,5 +202,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
   
   var solved = mark_path(maze, endX, endY, weight);
   
+  ~dump(solved);
+
   return (changes, superpos, length, solved);
 }
