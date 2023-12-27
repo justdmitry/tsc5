@@ -40,7 +40,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
   return (res, ());
 } 
 
-() prepare(int n, int m, tuple maze) impure {
+() prepare(int n, int m, tuple maze) impure inline {
   var new_weights = empty_tuple();
   int r = 0;
   repeat(n) {
@@ -79,7 +79,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
 }
 
 
-(tuple) do_step(tuple locs, int x, int y) impure {
+(tuple) do_step(tuple locs, int x, int y) impure inline {
   var n = maxX;
   var m = maxY;
   var maze = source_maze;
@@ -182,9 +182,9 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
   ;; solve
   var locs = empty_tuple();
   locs~tpush(cons_int(startX, startY));
-  do {
+  while (locs.len()) {
     locs = do_steps(locs);
-  } until (locs.len() == 0);
+  }
 
   ;; get path metrics
   var weight = weights.at(endX).at(endY);
