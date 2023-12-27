@@ -125,7 +125,6 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
 } 
 
 (tuple) mark_path(tuple maze, int x, int y, int weight) {
-  ~dump(pair(pair(x, y), weight));
   var n = maxX;
   var m = maxY;
   var i = 0;
@@ -168,7 +167,6 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
 }
 
 (int, int, int, tuple) solve(int n, int m, tuple maze) method_id {
-  ~dump(maze);
   
   ;; 2x2 is always already solved!
   if ((n * m) == 4) {
@@ -186,11 +184,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
   locs~tpush(cons_int(startX, startY));
   do {
     locs = do_steps(locs);
-    ~dump(weights);
-    ~dump(locs);
   } until (locs.len() == 0);
-  
-  ~strdump("Solved");
 
   ;; get path metrics
   var weight = weights.at(endX).at(endY);
@@ -198,7 +192,6 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
   (var superpos, var length) = divmod(suplen, weight:osup);
   
   var solved = mark_path(maze, endX, endY, weight);
-  ~dump(solved);
 
   return (changes, superpos, length, solved);
 }
