@@ -165,6 +165,8 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
 }
 
 (int, int, int, tuple) solve(int n, int m, tuple maze) method_id {
+  ~dump(maze);
+  
   ;; 2x2 is always already solved!
   if ((n * m) == 4) {
     return (0, 0, 1, maze);
