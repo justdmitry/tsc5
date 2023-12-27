@@ -53,20 +53,21 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
     repeat(m) {
       var w = 999999999999;
       var price = weight:free;
-      if (row.at(c) == path:start) {
+      var char = row.at(c);
+      if (char == path:start) {
         startX = r;
         startY = c;
         w = 0;
         price = 0;
       }
-      newrow~tpush(w);
-      if (row.at(c) == path:end) {
+      if (char == path:end) {
         endX = r;
         endY = c;
       }
-      if (row.at(c) == path:obst) { price += weight:obst; }
-      if (row.at(c) == path:osup) { price += weight:osup; }
+      if (char == path:obst) { price += weight:obst; }
+      if (char == path:osup) { price += weight:osup; }
       copyrow~tpush(price);
+      newrow~tpush(w);
       c += 1;
     }
     new_weights~tpush(newrow);
