@@ -101,7 +101,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
         if (prevWeight > newWeight) {
           wrow~replace(y2, newWeight);
           newWeights~replace(x2, wrow);
-          locs.tpush(cons_int(x2, y2));
+          locs~tpush(cons_int(x2, y2));
         }
       }
     }
@@ -125,6 +125,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
 } 
 
 (tuple) mark_path(tuple maze, int x, int y, int weight) {
+  ~dump(pair(pair(x, y), weight));
   var n = maxX;
   var m = maxY;
   var i = 0;
@@ -146,6 +147,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
     return maze;
   }
   
+  i = 0;
   repeat(8) {     ;; steps.len
     var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
@@ -159,6 +161,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
         return mark_path(maze, x2, y2, w); 
       }
     }
+    i += 1;
   }
   
   return empty_tuple();
@@ -183,14 +186,19 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
   locs~tpush(cons_int(startX, startY));
   do {
     locs = do_steps(locs);
+    ~dump(weights);
+    ~dump(locs);
   } until (locs.len() == 0);
+  
+  ~strdump("Solved");
 
   ;; get path metrics
   var weight = weights.at(endX).at(endY);
-  (var changes, weight) = divmod(weight, weight:obst);
-  (var superpos, var length) = divmod(weight, weight:osup);
+  (var changes, var suplen) = divmod(weight, weight:obst);
+  (var superpos, var length) = divmod(suplen, weight:osup);
   
   var solved = mark_path(maze, endX, endY, weight);
+  ~dump(solved);
 
   return (changes, superpos, length, solved);
 }

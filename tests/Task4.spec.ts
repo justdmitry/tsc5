@@ -42,10 +42,10 @@ describe('Task4', () => {
        const px: number = 0x58;
        const pf: number = 0x2E;
        let tb1 = new TupleBuilder();
-         tb1.writeNumber(px);
+         tb1.writeNumber(ps);
          tb1.writeNumber(px);
        let tb2 = new TupleBuilder();
-         tb2.writeNumber(ps);
+         tb2.writeNumber(px);
          tb2.writeNumber(px);
        let tb3 = new TupleBuilder();
          tb3.writeNumber(px);
