@@ -14,28 +14,12 @@
 ;; You may delete and rewrite as needed,
 ;; but the final implementation must adhere to the same structure
 
-const int prefix = 0x66e3dd16;   ;; random value
-
-(int, cell) load_data() inline_ref {
-  cell c = get_data();
-  slice cs = c.begin_parse();
-  if (cs.slice_bits() != 64) {
-    return (0, c); 
-  }
-  if (cs~load_uint(32) != prefix) {
-    return (0, c); 
-  }
-  return (cs.preload_uint(32), cs.preload_ref());
-} 
-
 cell get_storage() {
-  var (_, s) = load_data();
-  return s;
+  return get_data().begin_parse().preload_ref();
 }
 
 cell wrap_storage(int version_id, cell storage) {
   return begin_cell()
-    .store_uint(prefix, 32)
     .store_uint(version_id, 32)
     .store_ref(storage)
   .end_cell();
@@ -67,23 +51,25 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
     cell migs = in_msg_body~load_dict();      ;; Migrations
     cell payload = in_msg_body~load_ref();
 
-    var (ver, storage) = load_data();
+    if (exver == 0) {
+      set_data(wrap_storage(1, get_data()));
+      return();
+    }
+    
+    slice cs = get_data().begin_parse();
+    var ver = cs~load_int(32);
+    var storage = cs.preload_ref();
     
     throw_if(200, exver < ver);               ;; do not allow "earlier" versions
 
     throw_if(200, exver != ver);              ;; temporarily
 
-    slice ds = get_data().begin_parse();
-    cell storage = ds~load_ref();
-    
     storage = process_message(storage, msg_value, balance, in_msg_full, payload.begin_parse());
 
     set_data(wrap_storage(exver, storage));
 }
 
-
 ;; Return the current version of the smart contract
 int version() method_id {
-  var (v, _) = load_data();
-  return v;
+  return get_data().begin_parse().preload_int(32);
 }
