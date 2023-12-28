@@ -7,6 +7,8 @@
 int len(tuple src) asm "TLEN";
 (tuple) cons_int(int a, int b) asm "CONS";
 (int, int) uncons_int(tuple src) asm "UNCONS";
+forall X, Y, Z -> tuple triple_tup(X x, Y y, Z z) asm "TRIPLE";
+forall X, Y, Z -> (X, Y, Z) untriple_tup(tuple t) asm "UNTRIPLE";
 
 const int path:free  = "."u;  ;; no obstacles
 const int path:obst  = "X"u;  ;; obstacle
@@ -15,21 +17,28 @@ const int path:start = "S"u;  ;; start
 const int path:end   = "E"u;  ;; end
 const int path:path  = "!"u;  ;; path mark
 
-const int weight:free = 1;
-const int weight:osup = 500;
-const int weight:obst = 1000000;
+const int costs:free = 1;
+const int costs:osup = 500;
+const int costs:obst = 1000000;
+const int costs:unknown = 999999999999;
 
-global tuple source_maze;
-global tuple maze_copy;
+;; copy of input data for easier access
+global tuple input_data;
+
+;; cost of step into each cell
+global tuple maze_prices;
+
+;; cost of best path from start to each cell
+global tuple maze_costs;
+
+;; coords of Start and End
 global int startX;
 global int startY;
 global int endX;
 global int endY;
 
-global int maxX;
-global int maxY;
+;; list of available moves (eight)
 global tuple steps;
-global tuple weights;
 
 forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
   var res = empty_tuple();
@@ -42,40 +51,41 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
 } 
 
 () prepare(int n, int m, tuple maze) impure inline {
-  var new_weights = empty_tuple();
-  var copy = empty_tuple();
+  input_data = triple_tup(n, m, maze);
+  var new_costs = empty_tuple();
+  var new_prices = empty_tuple();
   int r = 0;
   repeat(n) {
     var row = maze.at(r);
-    var newrow = empty_tuple();
-    var copyrow = empty_tuple();
+    var cost_row = empty_tuple();
+    var price_row = empty_tuple();
     int c = 0;
     repeat(m) {
-      var w = 999999999999;
-      var price = weight:free;
+      var cost = costs:unknown;
+      var price = costs:free;
       var char = row.at(c);
       if (char == path:start) {
         startX = r;
         startY = c;
-        w = 0;
+        cost = 0;
         price = 0;
       }
       if (char == path:end) {
         endX = r;
         endY = c;
       }
-      if (char == path:obst) { price += weight:obst; }
-      if (char == path:osup) { price += weight:osup; }
-      copyrow~tpush(price);
-      newrow~tpush(w);
+      if (char == path:obst) { price += costs:obst; }
+      if (char == path:osup) { price += costs:osup; }
+      price_row~tpush(price);
+      cost_row~tpush(cost);
       c += 1;
     }
-    new_weights~tpush(newrow);
-    copy~tpush(copyrow);
+    new_costs~tpush(cost_row);
+    new_prices~tpush(price_row);
     r += 1;
   }
-  weights = new_weights;
-  maze_copy = copy;
+  maze_costs = new_costs;
+  maze_prices = new_prices;
   
   var new_steps = empty_tuple();
   new_steps~tpush(cons_int(-1, -1));
@@ -91,32 +101,30 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
 
 
 (tuple) do_step(tuple locs, int x, int y) impure inline {
-  var n = maxX;
-  var m = maxY;
-  var copy = maze_copy;
-  var newWeights = weights;
-  var weight = newWeights.at(x).at(y);
+  var (n, m, copy) = untriple_tup(input_data);
+  var costs = maze_costs;
+  var cost = costs.at(x).at(y);
   var i = 0;
   repeat(8) {     ;; steps.len
     var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
     var y2 = y + dy;
     ifnot ((x2 < 0) | (y2 < 0) | (x2 >= n) | (y2 >= m)) {
-      var price = copy.at(x2).at(y2);
-      var newWeight = weight + price;
+      var price = maze_prices.at(x2).at(y2);
+      var newCost = cost + price;
       if (price) {
-        var wrow = newWeights.at(x2);
-        var prevWeight = wrow.at(y2);
-        if (prevWeight > newWeight) {
-          wrow~replace(y2, newWeight);
-          newWeights~replace(x2, wrow);
+        var wrow = costs.at(x2);
+        var oldCost = wrow.at(y2);
+        if (oldCost > newCost) {
+          wrow~replace(y2, newCost);
+          costs~replace(x2, wrow);
           locs~tpush(cons_int(x2, y2));
         }
       }
     }
     i += 1;
   }
-  weights = newWeights;
+  maze_costs = costs;
   return locs;
 } 
 
@@ -133,25 +141,23 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
   return dest;
 } 
 
-(tuple) mark_path(tuple maze, int x, int y, int weight) {
-  var n = maxX;
-  var m = maxY;
+(tuple) mark_path(tuple maze, int x, int y, int cost) {
+  var (n, m, _) = untriple_tup(input_data);
   var i = 0;
-  var min = weight;
   repeat(8) {     ;; steps.len
     var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
     var y2 = y + dy;
     ifnot ((x2 < 0) | (y2 < 0) | (x2 >= n) | (y2 >= m)) {
-      var w = weights.at(x2).at(y2);
-      if (w < min) {
-        min = w;
+      var mc = maze_costs.at(x2).at(y2);
+      if (mc < cost) {
+        cost = mc;
       }
     }
     i += 1;
   }
   
-  if (min == 0) {
+  if (cost == 0) {
     return maze;
   }
   
@@ -161,12 +167,12 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
     var x2 = x + dx;
     var y2 = y + dy;
     ifnot ((x2 < 0) | (y2 < 0) | (x2 >= n) | (y2 >= m)) {
-      var w = weights.at(x2).at(y2);
-      if (w == min) {
-        var mrow = maze.at(x2);
-        mrow~replace(y2, path:path);
-        maze~replace(x2, mrow);
-        return mark_path(maze, x2, y2, w); 
+      var mc = maze_costs.at(x2).at(y2);
+      if (mc == cost) {
+        var row = maze.at(x2);
+        row~replace(y2, path:path);
+        maze~replace(x2, row);
+        return mark_path(maze, x2, y2, mc); 
       }
     }
     i += 1;
@@ -181,10 +187,6 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
   if ((n * m) == 4) {
     return (0, 0, 1, maze);
   }
-  
-  maxX = n;
-  maxY = m;
-  source_maze = maze;
 
   prepare(n, m, maze);
   
@@ -196,11 +198,11 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
   }
 
   ;; get path metrics
-  var weight = weights.at(endX).at(endY);
-  (var changes, var suplen) = divmod(weight, weight:obst);
-  (var superpos, var length) = divmod(suplen, weight:osup);
+  var cost = maze_costs.at(endX).at(endY);
+  (var changes, var suplen) = divmod(cost, costs:obst);
+  (var superpos, var length) = divmod(suplen, costs:osup);
   
-  var solved = mark_path(maze, endX, endY, weight);
+  var solved = mark_path(maze, endX, endY, cost);
 
   return (changes, superpos, length, solved);
 }
