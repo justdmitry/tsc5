@@ -1,3 +1,5 @@
+#include "imports/stdlib.fc";
+
 ;; All the code in recv_internal, get_storage, wrap_storage, and version
 ;; serves as an example of the intended structure.
 
@@ -11,6 +13,20 @@
 ;; how version-specific code is intended to be "wrapped" and interacted with.
 ;; You may delete and rewrite as needed,
 ;; but the final implementation must adhere to the same structure
+
+const int prefix = 0x66e3dd16;   ;; random value
+
+(int, cell) parse_data() {
+  cell c = get_data();
+  slice cs = c.begin_parse();
+  if (cs.slice_bits() != 64) {
+    return (0, c); 
+  }
+  if (cs~load_uint(32) != prefix) {
+    return (0, c); 
+  }
+  return (cs.preload_uint(32), cs.preload_ref());
+} 
 
 () recv_internal(int msg_value, int balance, cell in_msg_full, slice in_msg_body) impure {
     in_msg_body~skip_bits(32); ;; Skip the expected version
@@ -26,30 +42,28 @@
     slice ds = get_data().begin_parse();
     cell storage = ds~load_ref();
     
-    storage = process_message(storage, msg_value, balance, in_msg_full, payload.begin_parse());
+    ;;storage = process_message(storage, msg_value, balance, in_msg_full, payload.begin_parse());
 
-    set_data(wrap_storage(-2, storage)); ;; -2 is just a random placeholder for the version
+    ;;set_data(wrap_storage(-2, storage)); ;; -2 is just a random placeholder for the version
 }
 
 cell get_storage() {
-    slice cs = get_data().begin_parse();
-
-    ;; Logic to extract the storage on which the version-specific process_message and get-methods operate
-    cell storage = cs~load_ref();
-
-    return storage;
+  var (_, s) = parse_data();
+  return s;
 }
 
 cell wrap_storage(int version_id, cell storage) {
-    ;; add additional data required for versioning in this cell
-    return begin_cell()
-        .store_ref(storage)
-    .end_cell();
+  return begin_cell()
+    .store_uint(prefix, 32)
+    .store_uint(version_id, 32)
+    .store_ref(storage)
+  .end_cell();
 }
 
 ;; Return the current version of the smart contract
 int version() method_id {
-    return -2; ;; Not implemented
+  var (v, _) = parse_data();
+  return v;
 }
 
 ;; <<<<< Custom version-specific code begins
