@@ -40,9 +40,9 @@ global int endY;
 ;; list of available moves (eight)
 global tuple steps;
 
-forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline_ref {
-  var res = empty_tuple();
+forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
   var i = 0;
+  var res = empty_tuple();
   repeat(src.len()) {
     res~tpush(index == i ? value : src.at(i));
     i += 1;
