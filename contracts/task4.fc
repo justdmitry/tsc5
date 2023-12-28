@@ -100,7 +100,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
 }
 
 
-(tuple) do_step(tuple locs, tuple loc) impure inline_ref {
+(tuple) do_step(tuple locs, tuple loc) impure inline {
   var (x, y) = uncons_int(loc);
   var (n, m, copy) = untriple_tup(input_data);
   var costs = maze_costs;
