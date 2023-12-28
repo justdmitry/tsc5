@@ -100,7 +100,8 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
 }
 
 
-(tuple) do_step(tuple locs, int x, int y) impure inline {
+(tuple) do_step(tuple locs, tuple loc) impure inline {
+  var (x, y) = uncons_int(loc);
   var (n, m, copy) = untriple_tup(input_data);
   var costs = maze_costs;
   var cost = costs.at(x).at(y);
@@ -126,19 +127,6 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
   }
   maze_costs = costs;
   return locs;
-} 
-
-
-(tuple) do_steps(tuple src) impure inline {
-  var dest = empty_tuple();
-  var i = 0;
-  repeat(src.len()) {
-    var loc = src.at(i);
-    var (x, y) = uncons_int(loc);
-    dest = do_step(dest, x, y);
-    i += 1;
-  }
-  return dest;
 } 
 
 (tuple) mark_path(tuple maze, int x, int y, int cost) {
@@ -194,7 +182,14 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
   var locs = empty_tuple();
   locs~tpush(cons_int(startX, startY));
   while (locs.len()) {
-    locs = do_steps(locs);
+    var newlocs = empty_tuple();
+    var i = 0;
+    repeat(locs.len()) {
+      var loc = locs.at(i);
+      newlocs = do_step(newlocs, loc);
+      i += 1;
+    }
+    locs = newlocs;
   }
 
   ;; get path metrics
