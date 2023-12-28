@@ -113,14 +113,12 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
     ifnot ((x2 < 0) | (y2 < 0) | (x2 >= n) | (y2 >= m)) {
       var price = maze_prices.at(x2).at(y2);
       var newCost = cost + price;
-      if (price) {
-        var wrow = costs.at(x2);
-        var oldCost = wrow.at(y2);
-        if (oldCost > newCost) {
-          wrow~replace(y2, newCost);
-          costs~replace(x2, wrow);
-          locs~tpush(cons_int(x2, y2));
-        }
+      var wrow = costs.at(x2);
+      var oldCost = wrow.at(y2);
+      if (oldCost > newCost) {
+        wrow~replace(y2, newCost);
+        costs~replace(x2, wrow);
+        locs~tpush(cons_int(x2, y2));
       }
     }
     i += 1;
