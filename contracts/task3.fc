@@ -22,7 +22,7 @@ cell wrap_storage(int version_id, cell storage) {
   return begin_cell()
     .store_uint(version_id, 32)
     .store_ref(storage)
-  .end_cell();
+    .end_cell();
 }
 
 ;; <<<<< Custom version-specific code begins
@@ -45,6 +45,10 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
 ;; Custom version-specific code ends >>>>>
 
 
+;; TL-B:
+;;   _ new_version:uint32 migration_code:(Maybe ^Cell) = MigrationPayload;
+;;   _ expected_version:uint32 new_code:(Maybe ^Cell) migrations:(HashmapE 32 MigrationPayload) payload:^Cell = InternalMsgBody;
+
 () recv_internal(int msg_value, int balance, cell in_msg_full, slice in_msg_body) impure {
     int exver = in_msg_body~load_uint(32);    ;; Expected version
     cell code = in_msg_body~load_maybe_ref(); ;; Expected code
@@ -62,8 +66,11 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
     
     throw_if(200, exver < ver);               ;; do not allow "earlier" versions
 
-    throw_if(200, exver != ver);              ;; temporarily
-
+    if (exver != ver) {
+      throw_if(200, null?(code));
+      ;; set_c3(bless(code.begin_parse()));
+    }
+    
     storage = process_message(storage, msg_value, balance, in_msg_full, payload.begin_parse());
 
     set_data(wrap_storage(exver, storage));
