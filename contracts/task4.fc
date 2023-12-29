@@ -9,6 +9,7 @@ int len(tuple src) asm "TLEN";
 (int, int) uncons_int(tuple src) asm "UNCONS";
 forall X, Y, Z -> tuple triple_tup(X x, Y y, Z z) asm "TRIPLE";
 forall X, Y, Z -> (X, Y, Z) untriple_tup(tuple t) asm "UNTRIPLE";
+forall X -> (tuple) replace(tuple src, X value, int index) asm "SETINDEXVAR";
 
 const int path:free  = "."u;  ;; no obstacles
 const int path:obst  = "X"u;  ;; obstacle
@@ -39,16 +40,6 @@ global int endY;
 
 ;; list of available moves (eight)
 global tuple steps;
-
-forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
-  var i = 0;
-  var res = empty_tuple();
-  repeat(src.len()) {
-    res~tpush(index == i ? value : src.at(i));
-    i += 1;
-  };
-  return (res, ());
-} 
 
 () prepare(int n, int m, tuple maze) impure inline {
   input_data = triple_tup(n, m, maze);
@@ -116,8 +107,8 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
       var wrow = costs.at(x2);
       var oldCost = wrow.at(y2);
       if (oldCost > newCost) {
-        wrow~replace(y2, newCost);
-        costs~replace(x2, wrow);
+        wrow = replace(wrow, newCost, y2);
+        costs = replace(costs, wrow, x2);
         locs~tpush(cons_int(x2, y2));
       }
     }
@@ -149,8 +140,8 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
   }
   
   var row = maze.at(mx);
-  row~replace(my, path:path);
-  maze~replace(mx, row);
+  row = replace(row, path:path, my);
+  maze = replace(maze, row, mx);
   return mark_path(maze, mx, my, cost); 
 }
 
