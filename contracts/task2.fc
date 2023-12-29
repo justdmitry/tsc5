@@ -1,9 +1,8 @@
 #include "imports/stdlib.fc";
 
 int equal_slices(slice a, slice b) asm "SDEQ";
-forall X -> tuple cons_inv(tuple head, X tail) asm "CONS";
-forall X -> (tuple, X) uncons_inv(tuple list) asm "UNCONS";
 builder store_ref_builder(builder src, builder dest) asm "STBREFR";
+int len(tuple src) asm "TLEN";
 
 (cell) load_data_users() inline {
   var ds = get_data().begin_parse();
@@ -17,11 +16,11 @@ builder store_ref_builder(builder src, builder dest) asm "STBREFR";
 
 (int, tuple) get_total(cell users) inline_ref {
   var total = 0;
-  var list = null();
+  var list = empty_tuple();
   var (k, sh, found) = users.udict_get_min?(256);
   while (found) {
     var share = sh.preload_uint(32);
-    list = cons_inv(list, pair(k, share));
+    list~tpush(pair(k, share));
     total += share;
     (k, sh, found) = users.udict_get_next?(256, k); 
   };
@@ -73,8 +72,9 @@ builder store_ref_builder(builder src, builder dest) asm "STBREFR";
     
     var (total, list) = get_total(users);
 
-    do {
-      (list, var pair) = uncons_inv(list);
+    var i = 0;
+    repeat(list.len()) {
+      var pair = list.at(i);
       var (adr, share) = unpair(pair);
       var to_send = muldiv(share, coins, total);
       
@@ -86,7 +86,8 @@ builder store_ref_builder(builder src, builder dest) asm "STBREFR";
         .store_coins(to_send)
         .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
       send_raw_message(msg.end_cell(), 1);
-    } until (null?(list));
+      i += 1;
+    }
   }
 
   ;; transfer_notification#0x7362d09c query_id:uint64 amount:Coins = InternalMsgBody;
@@ -105,8 +106,9 @@ builder store_ref_builder(builder src, builder dest) asm "STBREFR";
     var body_header = begin_cell()
           .store_uint(0x0f8a7ea50000000000000000, 32 + 64);      ;; opcode and query_id
 
-    do {
-      (list, var pair) = uncons_inv(list);
+    var i = 0;
+    repeat(list.len()) {
+      var pair = list.at(i);
       var (adr, share) = unpair(pair);
       var to_send = muldiv(share, coins, total);
       
@@ -122,8 +124,8 @@ builder store_ref_builder(builder src, builder dest) asm "STBREFR";
           .store_uint(0x202, 14);
       var msg = msg_template.store_ref_builder(body);
       send_raw_message(msg.end_cell(), 1);
-      
-    } until (null?(list));
+      i += 1;
+    }
   }
 }
 
