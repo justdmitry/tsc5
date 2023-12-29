@@ -9,8 +9,6 @@ int len(tuple src) asm "TLEN";
 (int, int) uncons_int(tuple src) asm "UNCONS";
 forall X, Y, Z -> tuple triple_tup(X x, Y y, Z z) asm "TRIPLE";
 forall X, Y, Z -> (X, Y, Z) untriple_tup(tuple t) asm "UNTRIPLE";
-forall X -> tuple cons_rev(tuple tail, X head) asm "CONS";
-forall X -> (tuple, X) uncons_rev(tuple list) asm "UNCONS";
 
 const int path:free  = "."u;  ;; no obstacles
 const int path:obst  = "X"u;  ;; obstacle
@@ -89,15 +87,15 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
   maze_costs = new_costs;
   maze_prices = new_prices;
   
-  var new_steps = null();
-  new_steps = cons_rev(new_steps, cons_int(-1, -1));
-  new_steps = cons_rev(new_steps, cons_int(-1,  0));
-  new_steps = cons_rev(new_steps, cons_int(-1,  1));
-  new_steps = cons_rev(new_steps, cons_int( 0, -1));
-  new_steps = cons_rev(new_steps, cons_int( 0,  1));
-  new_steps = cons_rev(new_steps, cons_int( 1, -1));
-  new_steps = cons_rev(new_steps, cons_int( 1,  0));
-  new_steps = cons_rev(new_steps, cons_int( 1,  1));
+  var new_steps = empty_tuple();
+  new_steps~tpush(cons_int(-1, -1));
+  new_steps~tpush(cons_int(-1,  0));
+  new_steps~tpush(cons_int(-1,  1));
+  new_steps~tpush(cons_int( 0, -1));
+  new_steps~tpush(cons_int( 0,  1));
+  new_steps~tpush(cons_int( 1, -1));
+  new_steps~tpush(cons_int( 1,  0));
+  new_steps~tpush(cons_int( 1,  1));
   steps = new_steps;
 }
 
@@ -107,10 +105,9 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
   var (n, m, copy) = untriple_tup(input_data);
   var costs = maze_costs;
   var cost = costs.at(x).at(y);
-  var togo = steps;
-  do {
-    (togo, var step) = uncons_rev(togo);
-    var (dx, dy) = uncons_int(step);
+  var i = 0;
+  repeat(8) {     ;; steps.len
+    var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
     var y2 = y + dy;
     ifnot ((x2 < 0) | (y2 < 0) | (x2 >= n) | (y2 >= m)) {
@@ -124,17 +121,17 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
         locs~tpush(cons_int(x2, y2));
       }
     }
-  } until (null?(togo));
+    i += 1;
+  }
   maze_costs = costs;
   return locs;
 } 
 
 (tuple) mark_path(tuple maze, int x, int y, int cost) {
   var (n, m, _) = untriple_tup(input_data);
-  var togo = steps;
-  do {
-    (togo, var step) = uncons_rev(togo);
-    var (dx, dy) = uncons_int(step);
+  var i = 0;
+  repeat(8) {     ;; steps.len
+    var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
     var y2 = y + dy;
     ifnot ((x2 < 0) | (y2 < 0) | (x2 >= n) | (y2 >= m)) {
@@ -143,16 +140,16 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
         cost = mc;
       }
     }
-  } until (null?(togo));
+    i += 1;
+  }
   
   if (cost == 0) {
     return maze;
   }
   
-  togo = steps;
-  do {
-    (togo, var step) = uncons_rev(togo);
-    var (dx, dy) = uncons_int(step);
+  i = 0;
+  repeat(8) {     ;; steps.len
+    var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
     var y2 = y + dy;
     ifnot ((x2 < 0) | (y2 < 0) | (x2 >= n) | (y2 >= m)) {
@@ -164,7 +161,8 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
         return mark_path(maze, x2, y2, mc); 
       }
     }
-  } until (null?(togo));
+    i += 1;
+  }
   
   return empty_tuple();
 }
@@ -177,7 +175,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
   }
 
   prepare(n, m, maze);
-   
+  
   ;; solve
   var locs = empty_tuple();
   locs~tpush(cons_int(startX, startY));
