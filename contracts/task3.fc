@@ -16,18 +16,14 @@
 ;; but the final implementation must adhere to the same structure
 
 
-cell get_storage() {
+cell get_storage() inline {
   return get_data().begin_parse().preload_ref();
 }
 
-cell wrap_storage(int version_id, cell storage) {
-  var cs = get_data().begin_parse();
-  _ = cs~load_ref();                  ;; storage
-  var code = cs.preload_maybe_ref();  ;; code
+cell wrap_storage(int version_id, cell storage) inline {
   return begin_cell()
     .store_uint(version_id, 32)
     .store_ref(storage)
-    .store_maybe_ref(code)
     .end_cell();
 }
 
@@ -66,11 +62,7 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
 
   int exver = in_msg_body~load_uint(32);                   ;; Expected version
   ifnot (exver) {
-    set_data(begin_cell()
-            .store_uint(1, 32)
-            .store_ref(get_data())
-            .store_uint(0, 1)                              ;; maybe-ref for code without code
-            .end_cell());
+    set_data(wrap_storage(1, get_data()));
     return();
   }
 
@@ -80,8 +72,7 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
   
   slice cs = get_data().begin_parse();
   var stored_ver = cs~load_int(32);
-  var storage = cs~load_ref();
-  var stored_code = cs.preload_maybe_ref();
+  var storage = cs.preload_ref();
   
   ifnot (exver == stored_ver) {
     throw_if(200, null?(code));
@@ -97,20 +88,13 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
       }
     } until (stored_ver == exver);
     
-    stored_code = code;
+    set_code(code);
+    set_c3(bless(code.begin_parse()));
   }
-  
-  ifnot (null?(stored_code)) {
-    set_c3(bless(stored_code.begin_parse()));
-  }
-  
+
   storage = process_message(storage, msg_value, balance, in_msg_full, payload.begin_parse());
 
-  set_data(begin_cell()
-            .store_uint(stored_ver, 32)
-            .store_ref(storage)
-            .store_maybe_ref(stored_code)
-            .end_cell());
+  set_data(wrap_storage(stored_ver, storage));
 }
 
 ;; Return the current version of the smart contract
