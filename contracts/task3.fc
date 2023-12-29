@@ -21,9 +21,13 @@ cell get_storage() {
 }
 
 cell wrap_storage(int version_id, cell storage) {
+  var cs = get_data().begin_parse();
+  _ = cs~load_ref();                  ;; storage
+  var code = cs.preload_maybe_ref();  ;; code
   return begin_cell()
     .store_uint(version_id, 32)
     .store_ref(storage)
+    .store_maybe_ref(code)
     .end_cell();
 }
 
@@ -53,37 +57,62 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
 ;;   _ expected_version:uint32 new_code:(Maybe ^Cell) migrations:(HashmapE 32 MigrationPayload) payload:^Cell = InternalMsgBody;
 
 () recv_internal(int msg_value, int balance, cell in_msg_full, slice in_msg_body) impure {
+
   if (in_msg_body.slice_empty?()) { return (); }           ;; ignore empty
   
   var mfs = in_msg_full.begin_parse();
   var flags = mfs~load_uint(4);
   if (flags & 1) { return(); }                             ;; ignore bounced
 
-  int exver = in_msg_body~load_uint(32);    ;; Expected version
-
-  if (exver == 0) {
-    set_data(wrap_storage(1, get_data()));
+  int exver = in_msg_body~load_uint(32);                   ;; Expected version
+  ifnot (exver) {
+    set_data(begin_cell()
+            .store_uint(1, 32)
+            .store_ref(get_data())
+            .store_uint(0, 1)                              ;; maybe-ref for code without code
+            .end_cell());
     return();
   }
 
-  cell code = in_msg_body~load_maybe_ref(); ;; Expected code
-  cell migs = in_msg_body~load_dict();      ;; Migrations
-  cell payload = in_msg_body~load_ref();
+  cell code = in_msg_body~load_maybe_ref();                ;; Expected code
+  cell migs = in_msg_body~load_dict();                     ;; Migrations
+  cell payload = in_msg_body.preload_ref();
   
   slice cs = get_data().begin_parse();
-  var ver = cs~load_int(32);
-  var storage = cs.preload_ref();
+  var stored_ver = cs~load_int(32);
+  var storage = cs~load_ref();
+  var stored_code = cs.preload_maybe_ref();
   
-  throw_if(200, exver < ver);               ;; do not allow "earlier" versions
+  throw_if(200, exver < stored_ver);                       ;; do not allow "earlier" versions
 
-  ifnot (exver == ver) {
+  ifnot (exver == stored_ver) {
     throw_if(200, null?(code));
-    set_c3(bless(code.begin_parse()));
+    
+    do {
+      var (mig, found) = migs.udict_get?(32, stored_ver);
+      ifnot (found) { throw(200); }
+      stored_ver = mig.preload_uint(32);
+      var migcode = mig.preload_maybe_ref();
+      ifnot (null?(migcode)) {
+        set_c3(bless(migcode.begin_parse()));
+        storage = migrate_one(storage);
+      }
+    } until (stored_ver == exver);
+    
+    stored_code = code;
+  }
+  
+  ifnot (null?(stored_code)) {
+    set_c3(bless(stored_code.begin_parse()));
   }
   
   storage = process_message(storage, msg_value, balance, in_msg_full, payload.begin_parse());
 
-  set_data(wrap_storage(exver, storage));
+  set_data(begin_cell()
+            .store_uint(stored_ver, 32)
+            .store_ref(storage)
+            .store_maybe_ref(stored_code)
+            .end_cell());
 }
 
 ;; Return the current version of the smart contract
