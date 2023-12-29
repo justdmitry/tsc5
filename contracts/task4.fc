@@ -7,8 +7,6 @@
 int len(tuple src) asm "TLEN";
 (tuple) cons_int(int a, int b) asm "CONS";
 (int, int) uncons_int(tuple src) asm "UNCONS";
-forall X, Y, Z -> tuple triple_tup(X x, Y y, Z z) asm "TRIPLE";
-forall X, Y, Z -> (X, Y, Z) untriple_tup(tuple t) asm "UNTRIPLE";
 
 const int path:free  = "."u;  ;; no obstacles
 const int path:obst  = "X"u;  ;; obstacle
@@ -21,9 +19,6 @@ const int costs:free = 1;
 const int costs:osup = 500;
 const int costs:obst = 1000000;
 const int costs:unknown = 999999999999;
-
-;; copy of input data for easier access
-global tuple input_data;
 
 ;; cost of step into each cell
 global tuple maze_prices;
@@ -51,7 +46,6 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
 } 
 
 () prepare(int n, int m, tuple maze) impure inline {
-  input_data = triple_tup(n, m, maze);
   var new_costs = empty_tuple();
   var new_prices = empty_tuple();
   int r = 0;
@@ -80,10 +74,22 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
       cost_row~tpush(cost);
       c += 1;
     }
+    cost_row~tpush(costs:unknown);              ;; extra col to ignore right bound check
     new_costs~tpush(cost_row);
+    price_row~tpush(0);                         ;; extra col to ignore right bound check
     new_prices~tpush(price_row);
     r += 1;
   }
+  
+  var cost_rowex = empty_tuple();               ;; extra row to ignore bottom bound check
+  var price_rowex = empty_tuple();              ;; extra row to ignore bottom bound check
+  repeat(m + 1) {
+    cost_rowex~tpush(costs:unknown);
+    price_rowex~tpush(0);
+  }
+  new_costs~tpush(cost_rowex);
+  new_prices~tpush(price_rowex);
+
   maze_costs = new_costs;
   maze_prices = new_prices;
   
@@ -102,7 +108,6 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
 
 (tuple) do_step(tuple locs, tuple loc) impure inline {
   var (x, y) = uncons_int(loc);
-  var (n, m, copy) = untriple_tup(input_data);
   var costs = maze_costs;
   var cost = costs.at(x).at(y);
   var i = 0;
@@ -110,15 +115,17 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
     var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
     var y2 = y + dy;
-    ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
+    ifnot (min(x2, y2) < 0) {
       var price = maze_prices.at(x2).at(y2);
-      var newCost = cost + price;
-      var wrow = costs.at(x2);
-      var oldCost = wrow.at(y2);
-      if (oldCost > newCost) {
-        wrow~replace(y2, newCost);
-        costs~replace(x2, wrow);
-        locs~tpush(cons_int(x2, y2));
+      if (price) {
+        var newCost = cost + price;
+        var wrow = costs.at(x2);
+        var oldCost = wrow.at(y2);
+        if (oldCost > newCost) {
+          wrow~replace(y2, newCost);
+          costs~replace(x2, wrow);
+          locs~tpush(cons_int(x2, y2));
+        }
       }
     }
     i += 1;
@@ -128,7 +135,6 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
 } 
 
 (tuple) mark_path(tuple maze, int x, int y, int cost) {
-  var (n, m, _) = untriple_tup(input_data);
   var mx = 0;
   var my = 0;
   var i = 0;
@@ -136,7 +142,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
     var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
     var y2 = y + dy;
-    ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
+    ifnot (min(x2, y2) < 0) {
       var mc = maze_costs.at(x2).at(y2);
       ifnot (mc) { return maze; }   ;; this is Start
       if (mc < cost) {
