@@ -75,8 +75,6 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
   var storage = cs.preload_ref();
   
   ifnot (exver == stored_ver) {
-    throw_if(200, null?(code));
-    
     do {
       var (mig, found) = migs.udict_get?(32, stored_ver);
       ifnot (found) { throw(400); }
@@ -88,6 +86,7 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
       }
     } until (stored_ver == exver);
     
+    throw_if(200, null?(code));
     set_code(code);
     set_c3(bless(code.begin_parse()));
   }
