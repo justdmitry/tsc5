@@ -16,11 +16,11 @@
 ;; but the final implementation must adhere to the same structure
 
 
-cell get_storage() inline {
+cell get_storage() inline method_id(0x161c) {
   return get_data().begin_parse().preload_ref();
 }
 
-cell wrap_storage(int version_id, cell storage) inline {
+cell wrap_storage(int version_id, cell storage) inline method_id(0x35e5) {
   return begin_cell()
     .store_uint(version_id, 32)
     .store_ref(storage)
@@ -28,7 +28,7 @@ cell wrap_storage(int version_id, cell storage) inline {
 }
 
 ;; Return the current version of the smart contract
-int version() method_id {
+int version() method_id(0xbe97) {
   return get_data().begin_parse().preload_uint(32);
 }
 
