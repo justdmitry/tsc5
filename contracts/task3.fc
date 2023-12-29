@@ -64,8 +64,8 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
   var flags = mfs~load_uint(4);
   if (flags & 1) { return(); }                             ;; ignore bounced
 
-  int exver = in_msg_body~load_uint(32);                   ;; Expected version
-  ifnot (exver) {
+  int expected_ver = in_msg_body~load_uint(32);            ;; Expected version
+  ifnot (expected_ver) {
     set_data(wrap_storage(1, get_data()));
     return();
   }
@@ -78,7 +78,9 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
   var stored_ver = cs~load_uint(32);
   var storage = cs.preload_ref();
   
-  ifnot (exver == stored_ver) {
+  ifnot (expected_ver == stored_ver) {
+    throw_if(200, null?(code));
+
     do {
       var (mig, found) = migs.udict_get?(32, stored_ver);
       ifnot (found) { throw(400); }
@@ -88,9 +90,8 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
         set_c3(bless(migcode.begin_parse()));
         storage = migrate_one(storage);
       }
-    } until (stored_ver == exver);
+    } until (stored_ver == expected_ver);
     
-    throw_if(200, null?(code));
     set_code(code);                                         ;; save for future invocations
     set_c3(bless(code.begin_parse()));                      ;; for current invocation of process_message
   }
@@ -99,4 +100,3 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
 
   set_data(wrap_storage(stored_ver, storage));
 }
-
