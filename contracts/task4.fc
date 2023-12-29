@@ -103,7 +103,7 @@ global tuple steps;
     var y2 = y + dy;
     ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
       var price = maze_prices.at(x2).at(y2);
-      var newCost = cost + price;
+      var newCost = price + cost;
       var wrow = costs.at(x2);
       var oldCost = wrow.at(y2);
       if (oldCost > newCost) {
