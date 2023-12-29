@@ -89,7 +89,7 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
     do {
       var (mig, found) = migs.udict_get?(32, stored_ver);
       ifnot (found) { throw(400); }
-      stored_ver = mig.preload_uint(32);
+      stored_ver = mig~load_uint(32);
       var migcode = mig.preload_maybe_ref();
       ifnot (null?(migcode)) {
         set_c3(bless(migcode.begin_parse()));
