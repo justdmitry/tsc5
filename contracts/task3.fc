@@ -27,6 +27,10 @@ cell wrap_storage(int version_id, cell storage) inline {
     .end_cell();
 }
 
+;; Return the current version of the smart contract
+int version() method_id {
+  return get_data().begin_parse().preload_uint(32);
+}
 
 ;; <<<<< Custom version-specific code begins
 ;; This section (everything between << and >> characters) will be fully substituted for each version.
@@ -87,8 +91,8 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
     } until (stored_ver == exver);
     
     throw_if(200, null?(code));
-    set_code(code);
-    set_c3(bless(code.begin_parse()));
+    set_code(code);                                         ;; save for future invocations
+    set_c3(bless(code.begin_parse()));                      ;; for current invocation of process_message
   }
 
   storage = process_message(storage, msg_value, balance, in_msg_full, payload.begin_parse());
@@ -96,7 +100,3 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
   set_data(wrap_storage(stored_ver, storage));
 }
 
-;; Return the current version of the smart contract
-int version() method_id {
-  return get_data().begin_parse().preload_uint(32);
-}
