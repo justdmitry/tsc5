@@ -89,7 +89,6 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
     } until (stored_ver == exver);
     
     set_code(code);
-    set_c3(bless(code.begin_parse()));
   }
 
   storage = process_message(storage, msg_value, balance, in_msg_full, payload.begin_parse());
