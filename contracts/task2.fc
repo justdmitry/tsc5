@@ -68,13 +68,15 @@ builder store_ref_builder(builder src, builder dest) asm "STBREFR";
   if (op == 0x068530b3) {
     throw_if(122, users.dict_empty?());
     
-    msg_value~touch();
+    _ = cs~load_msg_addr(); ;; dest
+    var coins = cs~load_coins();
+    
     var (total, list) = get_total(users);
 
     do {
       (list, var pair) = uncons_inv(list);
       var (adr, share) = unpair(pair);
-      var to_send = muldiv(share, msg_value, total);
+      var to_send = muldiv(share, coins, total);
       
       var msg = begin_cell()
         ;; need to store: uint(0x18, 6), then 10 for adr prefix, then 0 for anycast, then 0000_0000 for workchain
