@@ -102,8 +102,7 @@ global tuple steps;
     var x2 = x + dx;
     var y2 = y + dy;
     ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
-      var price = maze_prices.at(x2).at(y2);
-      var newCost = price + cost;
+      var newCost = cost + maze_prices.at(x2).at(y2);
       var wrow = costs.at(x2);
       var oldCost = wrow.at(y2);
       if (oldCost > newCost) {
@@ -157,7 +156,7 @@ global tuple steps;
   ;; solve
   var locs = empty_tuple();
   locs~tpush(cons_int(startX, startY));
-  while (locs.len()) {
+  do {
     var newlocs = empty_tuple();
     var i = 0;
     repeat(locs.len()) {
@@ -166,7 +165,7 @@ global tuple steps;
       i += 1;
     }
     locs = newlocs;
-  }
+  } until (i == 0);
 
   ;; get path metrics
   var cost = maze_costs.at(endX).at(endY);
