@@ -3,6 +3,7 @@
 int equal_slices(slice a, slice b) asm "SDEQ";
 forall X -> tuple cons_inv(tuple head, X tail) asm "CONS";
 forall X -> (tuple, X) uncons_inv(tuple list) asm "UNCONS";
+builder store_ref_builder(builder src, builder dest) asm "STBREFR";
 
 (cell) load_data_users() inline {
   var ds = get_data().begin_parse();
@@ -119,7 +120,7 @@ forall X -> (tuple, X) uncons_inv(tuple list) asm "UNCONS";
           ;;  .store_uint(0, 1)                                  ;; forward_payload
           ;; that equals to 0 0001 0000 0001 0, or 0x202
           .store_uint(0x202, 14);
-      var msg = msg_template.store_ref(body.end_cell());
+      var msg = msg_template.store_ref_builder(body);
       send_raw_message(msg.end_cell(), 1);
       
     } until (null?(list));
