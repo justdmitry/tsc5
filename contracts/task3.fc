@@ -71,7 +71,7 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
   cell payload = in_msg_body.preload_ref();
   
   slice cs = get_data().begin_parse();
-  var stored_ver = cs~load_int(32);
+  var stored_ver = cs~load_uint(32);
   var storage = cs.preload_ref();
   
   ifnot (exver == stored_ver) {
@@ -98,5 +98,5 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
 
 ;; Return the current version of the smart contract
 int version() method_id {
-  return get_data().begin_parse().preload_int(32);
+  return get_data().begin_parse().preload_uint(32);
 }
