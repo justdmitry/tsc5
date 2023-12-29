@@ -129,6 +129,8 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
 
 (tuple) mark_path(tuple maze, int x, int y, int cost) {
   var (n, m, _) = untriple_tup(input_data);
+  var mx = 0;
+  var my = 0;
   var i = 0;
   repeat(8) {     ;; steps.len
     var (dx, dy) = uncons_int(steps.at(i));
@@ -136,35 +138,20 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
     var y2 = y + dy;
     ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
       var mc = maze_costs.at(x2).at(y2);
+      ifnot (mc) { return maze; }   ;; this is Start
       if (mc < cost) {
         cost = mc;
+        mx = x2;
+        my = y2;
       }
     }
     i += 1;
   }
   
-  if (cost == 0) {
-    return maze;
-  }
-  
-  i = 0;
-  repeat(8) {     ;; steps.len
-    var (dx, dy) = uncons_int(steps.at(i));
-    var x2 = x + dx;
-    var y2 = y + dy;
-    ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
-      var mc = maze_costs.at(x2).at(y2);
-      if (mc == cost) {
-        var row = maze.at(x2);
-        row~replace(y2, path:path);
-        maze~replace(x2, row);
-        return mark_path(maze, x2, y2, mc); 
-      }
-    }
-    i += 1;
-  }
-  
-  return empty_tuple();
+  var row = maze.at(mx);
+  row~replace(my, path:path);
+  maze~replace(mx, row);
+  return mark_path(maze, mx, my, cost); 
 }
 
 (int, int, int, tuple) solve(int n, int m, tuple maze) method_id {
