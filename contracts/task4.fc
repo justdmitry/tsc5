@@ -50,13 +50,6 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
   return (res, ());
 } 
 
-forall X -> (tuple) replace2(tuple src, X value, int y, int x) inline_ref {
-  var r = src.at(x);
-  r~replace(y, value);
-  src~replace(x, r);
-  return src;
-} 
-
 () prepare(int n, int m, tuple maze) impure inline {
   input_data = triple_tup(n, m, maze);
   var new_costs = empty_tuple();
@@ -123,7 +116,8 @@ forall X -> (tuple) replace2(tuple src, X value, int y, int x) inline_ref {
       var wrow = costs.at(x2);
       var oldCost = wrow.at(y2);
       if (oldCost > newCost) {
-        costs = replace2(costs, newCost, y2, x2);
+        wrow~replace(y2, newCost);
+        costs~replace(x2, wrow);
         locs~tpush(cons_int(x2, y2));
       }
     }
@@ -161,7 +155,9 @@ forall X -> (tuple) replace2(tuple src, X value, int y, int x) inline_ref {
     ifnot ((x2 < 0) | (y2 < 0) | (x2 >= n) | (y2 >= m)) {
       var mc = maze_costs.at(x2).at(y2);
       if (mc == cost) {
-        maze = replace2(maze, path:path, y2, x2);
+        var row = maze.at(x2);
+        row~replace(y2, path:path);
+        maze~replace(x2, row);
         return mark_path(maze, x2, y2, mc); 
       }
     }
