@@ -83,14 +83,12 @@ cell migrate_one(cell old_storage) { ;; it's just a placeholder that is required
   var storage = cs~load_ref();
   var stored_code = cs.preload_maybe_ref();
   
-  throw_if(200, exver < stored_ver);                       ;; do not allow "earlier" versions
-
   ifnot (exver == stored_ver) {
     throw_if(200, null?(code));
     
     do {
       var (mig, found) = migs.udict_get?(32, stored_ver);
-      ifnot (found) { throw(200); }
+      ifnot (found) { throw(400); }
       stored_ver = mig.preload_uint(32);
       var migcode = mig.preload_maybe_ref();
       ifnot (null?(migcode)) {
