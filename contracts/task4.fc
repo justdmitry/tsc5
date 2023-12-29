@@ -110,7 +110,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
     var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
     var y2 = y + dy;
-    ifnot ((x2 < 0) | (y2 < 0) | (x2 >= n) | (y2 >= m)) {
+    ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
       var price = maze_prices.at(x2).at(y2);
       var newCost = cost + price;
       var wrow = costs.at(x2);
@@ -134,7 +134,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
     var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
     var y2 = y + dy;
-    ifnot ((x2 < 0) | (y2 < 0) | (x2 >= n) | (y2 >= m)) {
+    ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
       var mc = maze_costs.at(x2).at(y2);
       if (mc < cost) {
         cost = mc;
@@ -152,7 +152,7 @@ forall X -> (tuple, ()) ~replace(tuple src, int index, X value) inline {
     var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
     var y2 = y + dy;
-    ifnot ((x2 < 0) | (y2 < 0) | (x2 >= n) | (y2 >= m)) {
+    ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
       var mc = maze_costs.at(x2).at(y2);
       if (mc == cost) {
         var row = maze.at(x2);
