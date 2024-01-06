@@ -70,7 +70,7 @@ global tuple steps;
       if (char == path:obst) { price += costs:obst; }
       if (char == path:osup) { price += costs:osup; }
       price_row~tpush(price);
-      cost_row~tpush(cons_int(cost, 0));
+      cost_row~tpush(cost);
       c += 1;
     }
     new_costs~tpush(cost_row);
@@ -97,7 +97,7 @@ global tuple steps;
   var (x, y) = uncons_int(loc);
   var (n, m) = uncons_int(input_data);
   var costs = maze_costs;
-  var (cost, _) = uncons_int(costs.at(x).at(y));
+  var cost = costs.at(x).at(y);
   if (cost >= bestEnd) { return locs; }
   var i = 0;
   repeat(8) {     ;; steps.len
@@ -108,9 +108,9 @@ global tuple steps;
       var price = maze_prices.at(x2).at(y2);
       var newCost = price + cost;
       var wrow = costs.at(x2);
-      var (oldCost, _) = uncons_int(wrow.at(y2));
+      var oldCost = wrow.at(y2);
       if (oldCost > newCost) {
-        wrow = replace(wrow, cons_int(newCost, i), y2);
+        wrow = replace(wrow, newCost, y2);
         costs = replace(costs, wrow, x2);
         if ((x2 == endX) & (y2 == endY)) {
           bestEnd = newCost;
@@ -127,22 +127,31 @@ global tuple steps;
   return locs;
 } 
 
-(tuple) mark_path(tuple maze) {
-  var x = endX;
-  var y = endY;
-  var (_, dir) = uncons_int(maze_costs.at(x).at(y));
-  while (1) 
-  {
-    var (dx, dy) = uncons_int(steps.at(dir));
-    x -= dx;
-    y -= dy;
-    if ((x == startX) & (y == startY)) { return maze; }
-    var row = maze.at(x);
-    row = replace(row, path:path, y);
-    maze = replace(maze, row, x);
-    (_, dir) = uncons_int(maze_costs.at(x).at(y));
+(tuple) mark_path(tuple maze, int x, int y, int cost) {
+  var (n, m) = uncons_int(input_data);
+  var mx = 0;
+  var my = 0;
+  var i = 0;
+  repeat(8) {     ;; steps.len
+    var (dx, dy) = uncons_int(steps.at(i));
+    var x2 = x + dx;
+    var y2 = y + dy;
+    ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
+      var mc = maze_costs.at(x2).at(y2);
+      ifnot (mc) { return maze; }   ;; this is Start
+      if (mc < cost) {
+        cost = mc;
+        mx = x2;
+        my = y2;
+      }
+    }
+    i += 1;
   }
-  return maze;
+  
+  var row = maze.at(mx);
+  row = replace(row, path:path, my);
+  maze = replace(maze, row, mx);
+  return mark_path(maze, mx, my, cost); 
 }
 
 (int, int, int, tuple) solve(int n, int m, tuple maze) method_id {
@@ -169,10 +178,11 @@ global tuple steps;
   }
 
   ;; get path metrics
-  (var changes, var suplen) = divmod(bestEnd, costs:obst);
+  var cost = maze_costs.at(endX).at(endY);
+  (var changes, var suplen) = divmod(cost, costs:obst);
   (var superpos, var length) = divmod(suplen, costs:osup);
   
-  var solved = mark_path(maze);
+  var solved = mark_path(maze, endX, endY, cost);
 
   return (changes, superpos, length, solved);
 }
