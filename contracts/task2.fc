@@ -4,12 +4,6 @@ int equal_slices(slice a, slice b) asm "SDEQ";
 builder store_ref_builder(builder src, builder dest) asm "STBREFR";
 int len(tuple src) asm "TLEN";
 
-(cell) load_data_users() inline {
-  var ds = get_data().begin_parse();
-  ds~load_msg_addr();
-  return ds.preload_dict();
-}
-
 () save_data(slice admin_address, cell users) impure inline {
   set_data(begin_cell().store_slice(admin_address).store_dict(users).end_cell());
 }
@@ -130,12 +124,12 @@ int len(tuple src) asm "TLEN";
 }
 
 cell get_users() method_id {
-  return load_data_users();
+  return get_data().begin_parse().preload_ref();
 }
 
 int get_user_share(slice user_address) method_id {
   var (wc, bits) = parse_std_addr(user_address);
-  var users = load_data_users();
+  var users = get_data().begin_parse().preload_ref();
   var (share, _) = users.udict_get?(256, bits);                 ;; doc says we will always have user
   return share.preload_uint(32);
 }
