@@ -21,7 +21,6 @@ const int path:path  = "!"u;  ;; path mark
 const int costs:free = 1;
 const int costs:osup = 500;
 const int costs:obst = 1000000;
-const int costs:unknown = -1;
 
 ;; copy of input data for easier access
 global tuple input_data;
@@ -46,20 +45,23 @@ global tuple steps;
   input_data = cons_int(n, m);
   var new_costs = empty_tuple();
   var new_prices = empty_tuple();
+
+  var cost_row = empty_tuple();
+  repeat(m) {
+    cost_row~tpush(0);
+  }
+
   int r = 0;
   repeat(n) {
     var row = maze.at(r);
-    var cost_row = empty_tuple();
     var price_row = empty_tuple();
     int c = 0;
     repeat(m) {
-      var cost = costs:unknown;
       var price = costs:free;
       var char = row.at(c);
       if (char == path:start) {
         startX = r;
         startY = c;
-        cost = 0;
         price = 0;
       }
       if (char == path:end) {
@@ -69,7 +71,6 @@ global tuple steps;
       if (char == path:obst) { price += costs:obst; }
       if (char == path:osup) { price += costs:osup; }
       price_row~tpush(price);
-      cost_row~tpush(cost);
       c += 1;
     }
     new_costs~tpush(cost_row);
@@ -90,7 +91,7 @@ global tuple steps;
   new_steps~tpush(cons_int( 1,  1));
   steps = new_steps;
 
-  bestEnd = costs:unknown;
+  bestEnd = 0;
 }
 
 
@@ -99,7 +100,7 @@ global tuple steps;
   var (n, m) = uncons_int(input_data);
   var costs = maze_costs;
   var cost = costs.at(x).at(y);
-  if ((bestEnd > 0) & (cost >= bestEnd)) { return locs; }
+  if (bestEnd & (cost >= bestEnd)) { return locs; }
   var i = 0;
   repeat(8) {     ;; steps.len
     var (dx, dy) = uncons_int(steps.at(i));
@@ -110,7 +111,7 @@ global tuple steps;
       var newCost = price + cost;
       var wrow = costs.at(x2);
       var oldCost = wrow.at(y2);
-      if ((oldCost > newCost) | (oldCost == -1)) {
+      if ((oldCost == 0) | (oldCost > newCost)) {
         wrow = replace(wrow, newCost, y2);
         costs = replace(costs, wrow, x2);
         if ((x2 == endX) & (y2 == endY)) {
@@ -141,10 +142,10 @@ global tuple steps;
       var (dx, dy) = uncons_int(steps.at(i));
       var x2 = x + dx;
       var y2 = y + dy;
+      if ((x2 == startX) & (y2 == startY)) { return maze; }
       ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
         var mc = maze_costs.at(x2).at(y2);
-        ifnot (mc) { return maze; }   ;; this is Start
-        if (mc < cost) {
+        if (mc & (mc < cost)) {
           cost = mc;
           mx = x2;
           my = y2;
