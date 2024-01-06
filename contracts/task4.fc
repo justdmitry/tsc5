@@ -109,7 +109,9 @@ global tuple steps;
       if (oldCost > newCost) {
         wrow = replace(wrow, newCost, y2);
         costs = replace(costs, wrow, x2);
-        locs~tpush(cons_int(x2, y2));
+        if ((x2 != endX) | (y2 != endY)) {
+          locs~tpush(cons_int(x2, y2));
+        }
       }
     }
     i += 1;
