@@ -187,10 +187,11 @@ global tuple steps;
   }
 
   ;; get path metrics
+
+  var solved = mark_path(maze);
+
   (var changes, var suplen) = divmod(bestEnd, costs:obst);
   (var superpos, var length) = divmod(suplen, costs:osup);
   
-  var solved = mark_path(maze);
-
   return (changes, superpos, length, solved);
 }
