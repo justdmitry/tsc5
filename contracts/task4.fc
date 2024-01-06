@@ -37,11 +37,13 @@ global int startX;
 global int startY;
 global int endX;
 global int endY;
+global int bestEnd;
 
 ;; list of available moves (eight)
 global tuple steps;
 
 () prepare(int n, int m, tuple maze) impure inline {
+  bestEnd = costs:unknown;
   input_data = cons_int(n, m);
   var new_costs = empty_tuple();
   var new_prices = empty_tuple();
@@ -96,6 +98,7 @@ global tuple steps;
   var (n, m) = uncons_int(input_data);
   var costs = maze_costs;
   var cost = costs.at(x).at(y);
+  if (cost >= bestEnd) { return locs; }
   var i = 0;
   repeat(8) {     ;; steps.len
     var (dx, dy) = uncons_int(steps.at(i));
@@ -109,7 +112,11 @@ global tuple steps;
       if (oldCost > newCost) {
         wrow = replace(wrow, newCost, y2);
         costs = replace(costs, wrow, x2);
-        if ((x2 != endX) | (y2 != endY)) {
+        if ((x2 == endX) & (y2 == endY)) {
+          bestEnd = newCost;
+        } 
+        else 
+        {
           locs~tpush(cons_int(x2, y2));
         }
       }
