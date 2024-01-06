@@ -101,7 +101,7 @@ global tuple steps;
   var cost = costs.at(x).at(y);
   if (cost >= bestEnd) { return locs; }
   var i = 0;
-  repeat(8) {     ;; steps.len
+  while (i < 8) {     ;; steps.len
     var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
     var y2 = y + dy;
@@ -115,6 +115,7 @@ global tuple steps;
         costs = replace(costs, wrow, x2);
         if ((x2 == endX) & (y2 == endY)) {
           bestEnd = newCost;
+          i = 8;
         } 
         else 
         {
