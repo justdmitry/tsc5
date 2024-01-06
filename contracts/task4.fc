@@ -70,7 +70,7 @@ global tuple steps;
       if (char == path:obst) { price += costs:obst; }
       if (char == path:osup) { price += costs:osup; }
       price_row~tpush(price);
-      cost_row~tpush(triple_tup(cost, 99999, 99999));
+      cost_row~tpush(cons_int(cost, 0));
       c += 1;
     }
     new_costs~tpush(cost_row);
@@ -97,7 +97,7 @@ global tuple steps;
   var (x, y) = uncons_int(loc);
   var (n, m) = uncons_int(input_data);
   var costs = maze_costs;
-  var (cost, _, _) = untriple_tup(costs.at(x).at(y));
+  var (cost, _) = uncons_int(costs.at(x).at(y));
   if (cost >= bestEnd) { return locs; }
   var i = 0;
   repeat(8) {     ;; steps.len
@@ -108,9 +108,9 @@ global tuple steps;
       var price = maze_prices.at(x2).at(y2);
       var newCost = price + cost;
       var wrow = costs.at(x2);
-      var (oldCost, _, _) = untriple_tup(wrow.at(y2));
+      var (oldCost, _) = uncons_int(wrow.at(y2));
       if (oldCost > newCost) {
-        wrow = replace(wrow, triple_tup(newCost, x, y), y2);
+        wrow = replace(wrow, cons_int(newCost, i), y2);
         costs = replace(costs, wrow, x2);
         if ((x2 == endX) & (y2 == endY)) {
           bestEnd = newCost;
@@ -128,13 +128,19 @@ global tuple steps;
 } 
 
 (tuple) mark_path(tuple maze) {
-  var (_, x, y) = untriple_tup(maze_costs.at(endX).at(endY));
-  while ((x != startX) | (y != startY)) 
+  var x = endX;
+  var y = endY;
+  var (_, dir) = uncons_int(maze_costs.at(x).at(y));
+  while (1) 
   {
+    var (dx, dy) = uncons_int(steps.at(dir));
+    x -= dx;
+    y -= dy;
+    if ((x == startX) & (y == startY)) { return maze; }
     var row = maze.at(x);
     row = replace(row, path:path, y);
     maze = replace(maze, row, x);
-    (_, x, y) = untriple_tup(maze_costs.at(x).at(y));
+    (_, dir) = uncons_int(maze_costs.at(x).at(y));
   }
   return maze;
 }
