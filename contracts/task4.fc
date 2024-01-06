@@ -19,9 +19,9 @@ const int path:end   = "E"u;  ;; end
 const int path:path  = "!"u;  ;; path mark
 
 const int costs:free = 1;
-const int costs:osup = 100;
-const int costs:obst = 10000;
-const int costs:unknown = 9999999;
+const int costs:osup = 500;
+const int costs:obst = 1000000;
+const int costs:unknown = 999999999999;
 
 ;; copy of input data for easier access
 global tuple input_data;
