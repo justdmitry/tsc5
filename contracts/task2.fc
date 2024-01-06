@@ -124,7 +124,9 @@ int len(tuple src) asm "TLEN";
 }
 
 cell get_users() method_id {
-  return get_data().begin_parse().preload_ref();
+  var ds = get_data().begin_parse();
+  ds~load_msg_addr();
+  return ds.preload_dict();
 }
 
 int get_user_share(slice user_address) method_id {
