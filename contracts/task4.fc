@@ -68,7 +68,7 @@ global tuple steps;
       if (char == path:obst) { price += costs:obst; }
       if (char == path:osup) { price += costs:osup; }
       price_row~tpush(price);
-      cost_row~tpush(triple_tup(cost, 0, 0));
+      cost_row~tpush(triple_tup(cost, 99999, 99999));
       c += 1;
     }
     new_costs~tpush(cost_row);
@@ -121,12 +121,11 @@ global tuple steps;
 (tuple, int) mark_path(tuple maze) {
   var costs = maze_costs;
   var (cost, x, y) = untriple_tup(costs.at(endX).at(endY));
-  var cost2 = cost;
-  while (cost2) {
+  while ((x != startX) & (y != startY)) {
     var row = maze.at(x);
     row = replace(row, path:path, y);
     maze = replace(maze, row, x);
-    (cost2, x, y) = untriple_tup(costs.at(x).at(y));
+    (_, x, y) = untriple_tup(costs.at(x).at(y));
   };
   
   return (maze, cost);
