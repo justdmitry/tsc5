@@ -24,7 +24,8 @@ const int costs:obst = 1000000;
 const int costs:unknown = 999999999999;
 
 ;; copy of input data for easier access
-global tuple input_data;
+global int nn;
+global int mm;
 
 ;; cost of step into each cell
 global tuple maze_prices;
@@ -42,7 +43,6 @@ global int endY;
 global tuple steps;
 
 () prepare(int n, int m, tuple maze) impure inline {
-  input_data = triple_tup(n, m, maze);
   var new_costs = empty_tuple();
   var new_prices = empty_tuple();
   int r = 0;
@@ -93,7 +93,6 @@ global tuple steps;
 
 (tuple) do_step(tuple locs, tuple loc) impure inline {
   var (x, y) = uncons_int(loc);
-  var (n, m, copy) = untriple_tup(input_data);
   var costs = maze_costs;
   var cost = costs.at(x).at(y);
   var i = 0;
@@ -101,7 +100,7 @@ global tuple steps;
     var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
     var y2 = y + dy;
-    ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
+    ifnot ((min(x2, y2) < 0) | (x2 >= nn) | (y2 >= mm)) {
       var price = maze_prices.at(x2).at(y2);
       var newCost = price + cost;
       var wrow = costs.at(x2);
@@ -119,7 +118,6 @@ global tuple steps;
 } 
 
 (tuple) mark_path(tuple maze, int x, int y, int cost) {
-  var (n, m, _) = untriple_tup(input_data);
   var mx = 0;
   var my = 0;
   var i = 0;
@@ -127,7 +125,7 @@ global tuple steps;
     var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
     var y2 = y + dy;
-    ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
+    ifnot ((min(x2, y2) < 0) | (x2 >= nn) | (y2 >= mm)) {
       var mc = maze_costs.at(x2).at(y2);
       ifnot (mc) { return maze; }   ;; this is Start
       if (mc < cost) {
@@ -152,6 +150,8 @@ global tuple steps;
     return (0, 0, 1, maze);
   }
 
+  nn = n;
+  mm = m;
   prepare(n, m, maze);
   
   ;; solve
