@@ -130,29 +130,34 @@ global tuple steps;
 
 (tuple) mark_path(tuple maze, int x, int y, int cost) {
   var (n, m) = uncons_int(input_data);
-  var mx = 0;
-  var my = 0;
-  var i = 0;
-  repeat(8) {     ;; steps.len
-    var (dx, dy) = uncons_int(steps.at(i));
-    var x2 = x + dx;
-    var y2 = y + dy;
-    ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
-      var mc = maze_costs.at(x2).at(y2);
-      ifnot (mc) { return maze; }   ;; this is Start
-      if (mc < cost) {
-        cost = mc;
-        mx = x2;
-        my = y2;
+  while (1) {
+    var mx = 0;
+    var my = 0;
+    var i = 0;
+    repeat(8) {     ;; steps.len
+      var (dx, dy) = uncons_int(steps.at(i));
+      var x2 = x + dx;
+      var y2 = y + dy;
+      ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
+        var mc = maze_costs.at(x2).at(y2);
+        ifnot (mc) { return maze; }   ;; this is Start
+        if (mc < cost) {
+          cost = mc;
+          mx = x2;
+          my = y2;
+        }
       }
+      i += 1;
     }
-    i += 1;
+    
+    var row = maze.at(mx);
+    row = replace(row, path:path, my);
+    maze = replace(maze, row, mx);
+    x = mx;
+    y = my;
   }
   
-  var row = maze.at(mx);
-  row = replace(row, path:path, my);
-  maze = replace(maze, row, mx);
-  return mark_path(maze, mx, my, cost); 
+  return maze;
 }
 
 (int, int, int, tuple) solve(int n, int m, tuple maze) method_id {
