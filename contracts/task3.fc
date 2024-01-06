@@ -20,7 +20,7 @@ cell get_storage() inline {
   return get_data().begin_parse().preload_ref();
 }
 
-cell wrap_storage(int version_id, cell storage) inline {
+cell wrap_storage(int version_id, cell storage) inline_ref {
   return begin_cell()
     .store_uint(version_id, 32)
     .store_ref(storage)
