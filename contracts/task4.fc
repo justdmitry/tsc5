@@ -178,11 +178,10 @@ global tuple steps;
   }
 
   ;; get path metrics
-  var cost = maze_costs.at(endX).at(endY);
-  (var changes, var suplen) = divmod(cost, costs:obst);
+  (var changes, var suplen) = divmod(bestEnd, costs:obst);
   (var superpos, var length) = divmod(suplen, costs:osup);
   
-  var solved = mark_path(maze, endX, endY, cost);
+  var solved = mark_path(maze, endX, endY, bestEnd);
 
   return (changes, superpos, length, solved);
 }
