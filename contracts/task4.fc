@@ -104,23 +104,21 @@ global tuple steps;
   repeat(8) {     ;; steps.len
     var (dx, dy) = uncons_int(steps.at(i));
     var x2 = x + dx;
-    ifnot ((x2 < 0) | (x2 >= n)) {
-      var y2 = y + dy;
-      ifnot ((y2 < 0) | (y2 >= m)) {
-        var price = maze_prices.at(x2).at(y2);
-        var newCost = price + cost;
-        var wrow = costs.at(x2);
-        var oldCost = wrow.at(y2);
-        if (oldCost > newCost) {
-          wrow = replace(wrow, newCost, y2);
-          costs = replace(costs, wrow, x2);
-          if ((x2 == endX) & (y2 == endY)) {
-            bestEnd = newCost;
-          } 
-          else 
-          {
-            locs~tpush(cons_int(x2, y2));
-          }
+    var y2 = y + dy;
+    ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
+      var price = maze_prices.at(x2).at(y2);
+      var newCost = price + cost;
+      var wrow = costs.at(x2);
+      var oldCost = wrow.at(y2);
+      if (oldCost > newCost) {
+        wrow = replace(wrow, newCost, y2);
+        costs = replace(costs, wrow, x2);
+        if ((x2 == endX) & (y2 == endY)) {
+          bestEnd = newCost;
+        } 
+        else 
+        {
+          locs~tpush(cons_int(x2, y2));
         }
       }
     }
