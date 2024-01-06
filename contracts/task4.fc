@@ -122,12 +122,12 @@ global tuple steps;
   var costs = maze_costs;
   var (cost, x, y) = untriple_tup(costs.at(endX).at(endY));
   var cost2 = cost;
-  do {
+  while (cost2) {
     var row = maze.at(x);
     row = replace(row, path:path, y);
     maze = replace(maze, row, x);
     (cost2, x, y) = untriple_tup(costs.at(x).at(y));
-  } until (cost2 == 0);
+  };
   
   return (maze, cost);
 }
