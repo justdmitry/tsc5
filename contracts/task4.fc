@@ -42,7 +42,7 @@ global int endY;
 global tuple steps;
 
 () prepare(int n, int m, tuple maze) impure inline {
-  input_data = triple_tup(n, m, maze);
+  input_data = cons_int(n, m);
   var new_costs = empty_tuple();
   var new_prices = empty_tuple();
   int r = 0;
@@ -93,7 +93,7 @@ global tuple steps;
 
 (tuple) do_step(tuple locs, tuple loc) impure inline {
   var (x, y) = uncons_int(loc);
-  var (n, m, copy) = untriple_tup(input_data);
+  var (n, m) = uncons_int(input_data);
   var costs = maze_costs;
   var cost = costs.at(x).at(y);
   var i = 0;
@@ -119,7 +119,7 @@ global tuple steps;
 } 
 
 (tuple) mark_path(tuple maze, int x, int y, int cost) {
-  var (n, m, _) = untriple_tup(input_data);
+  var (n, m) = uncons_int(input_data);
   var mx = 0;
   var my = 0;
   var i = 0;
