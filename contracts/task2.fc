@@ -72,20 +72,21 @@ int len(tuple src) asm "TLEN";
     
     var (total, list) = get_total(users);
 
+    var msg = begin_cell()
+      ;; need to store: uint(0x18, 6), then 10 for adr prefix, then 0 for anycast, then 0000_0000 for workchain
+      ;; that's: in binary 011000 10 0 00000000 with len 6+2+1+8=17, and in hex it's 0xC400
+      .store_uint(0xC400, 17);
+
     var i = 0;
     repeat(list.len()) {
       var pair = list.at(i);
       var (adr, share) = unpair(pair);
       var to_send = muldiv(share, coins, total);
       
-      var msg = begin_cell()
-        ;; need to store: uint(0x18, 6), then 10 for adr prefix, then 0 for anycast, then 0000_0000 for workchain
-        ;; that's: in binary 011000 10 0 00000000 with len 6+2+1+8=17, and in hex it's 0xC400
-        .store_uint(0xC400, 17)
-        .store_uint(adr, 256)      ;; address bytes (pubkey hash)
+      var c = msg.store_uint(adr, 256)      ;; address bytes (pubkey hash)
         .store_coins(to_send)
         .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
-      send_raw_message(msg.end_cell(), 1);
+      send_raw_message(c.end_cell(), 1);
       i += 1;
     }
   }
