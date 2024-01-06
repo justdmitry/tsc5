@@ -42,8 +42,7 @@ global int bestEnd;
 ;; list of available moves (eight)
 global tuple steps;
 
-() prepare(int n, int m, tuple maze) impure inline {
-  bestEnd = costs:unknown;
+() prepare(tuple maze, int n, int m) impure inline {
   input_data = cons_int(n, m);
   var new_costs = empty_tuple();
   var new_prices = empty_tuple();
@@ -90,6 +89,8 @@ global tuple steps;
   new_steps~tpush(cons_int( 1,  0));
   new_steps~tpush(cons_int( 1,  1));
   steps = new_steps;
+
+  bestEnd = costs:unknown;
 }
 
 
@@ -161,7 +162,7 @@ global tuple steps;
     return (0, 0, 1, maze);
   }
 
-  prepare(n, m, maze);
+  prepare(maze, n, m);
   
   ;; solve
   var locs = empty_tuple();
