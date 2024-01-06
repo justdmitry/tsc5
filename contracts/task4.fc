@@ -19,9 +19,9 @@ const int path:end   = "E"u;  ;; end
 const int path:path  = "!"u;  ;; path mark
 
 const int costs:free = 1;
-const int costs:osup = 500;
-const int costs:obst = 1000000;
-const int costs:unknown = 999999999999;
+const int costs:osup = 100;
+const int costs:obst = 10000;
+const int costs:unknown = 9999999;
 
 ;; copy of input data for easier access
 global tuple input_data;
@@ -166,8 +166,17 @@ global tuple steps;
 (int, int, int, tuple) solve(int n, int m, tuple maze) method_id {
   
   ;; 2x2 is always already solved!
-  if ((n * m) == 4) {
+  var mult = n * m;
+  if (mult == 4) {
     return (0, 0, 1, maze);
+  }
+
+  ;; 3[3 solved when center is S or E
+  if (mult == 9) {
+    var c = maze.at(1).at(1);
+    if ((c == path:start) | (c == path:end)) {
+      return (0, 0, 1, maze);
+    }
   }
 
   prepare(maze, n, m);
