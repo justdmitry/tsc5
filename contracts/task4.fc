@@ -128,8 +128,11 @@ global tuple steps;
   return locs;
 } 
 
-(tuple) mark_path(tuple maze, int x, int y, int cost) {
+(tuple) mark_path(tuple maze) {
   var (n, m) = uncons_int(input_data);
+  int x = endX;
+  int y = endY;
+  int cost = bestEnd;
   while (1) {
     var mx = 0;
     var my = 0;
@@ -187,7 +190,7 @@ global tuple steps;
   (var changes, var suplen) = divmod(bestEnd, costs:obst);
   (var superpos, var length) = divmod(suplen, costs:osup);
   
-  var solved = mark_path(maze, endX, endY, bestEnd);
+  var solved = mark_path(maze);
 
   return (changes, superpos, length, solved);
 }
