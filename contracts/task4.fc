@@ -93,8 +93,9 @@ global tuple steps;
 
 (tuple) do_step(tuple locs, tuple loc) impure inline {
   var (x, y) = uncons_int(loc);
-  var cost = maze_costs.at(x).at(y);
   var (n, m) = uncons_int(input_data);
+  var costs = maze_costs;
+  var cost = costs.at(x).at(y);
   var i = 0;
   repeat(8) {     ;; steps.len
     var (dx, dy) = uncons_int(steps.at(i));
@@ -103,16 +104,17 @@ global tuple steps;
     ifnot ((min(x2, y2) < 0) | (x2 >= n) | (y2 >= m)) {
       var price = maze_prices.at(x2).at(y2);
       var newCost = price + cost;
-      var wrow = maze_costs.at(x2);
+      var wrow = costs.at(x2);
       var oldCost = wrow.at(y2);
       if (oldCost > newCost) {
         wrow = replace(wrow, newCost, y2);
-        maze_costs = replace(maze_costs, wrow, x2);
+        costs = replace(costs, wrow, x2);
         locs~tpush(cons_int(x2, y2));
       }
     }
     i += 1;
   }
+  maze_costs = costs;
   return locs;
 } 
 
