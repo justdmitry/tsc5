@@ -21,7 +21,7 @@ const int path:path  = "!"u;  ;; path mark
 const int costs:free = 1;
 const int costs:osup = 500;
 const int costs:obst = 1000000;
-const int costs:unknown = 999999999999;
+const int costs:unknown = -1;
 
 ;; copy of input data for easier access
 global tuple input_data;
@@ -99,7 +99,7 @@ global tuple steps;
   var (n, m) = uncons_int(input_data);
   var costs = maze_costs;
   var cost = costs.at(x).at(y);
-  if (cost >= bestEnd) { return locs; }
+  if ((bestEnd > 0) & (cost >= bestEnd)) { return locs; }
   var i = 0;
   repeat(8) {     ;; steps.len
     var (dx, dy) = uncons_int(steps.at(i));
@@ -110,7 +110,7 @@ global tuple steps;
       var newCost = price + cost;
       var wrow = costs.at(x2);
       var oldCost = wrow.at(y2);
-      if (oldCost > newCost) {
+      if ((oldCost > newCost) | (oldCost == -1)) {
         wrow = replace(wrow, newCost, y2);
         costs = replace(costs, wrow, x2);
         if ((x2 == endX) & (y2 == endY)) {
