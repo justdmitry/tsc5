@@ -80,13 +80,13 @@ global tuple steps;
   maze_prices = new_prices;
   
   var new_steps = empty_tuple();
-  new_steps~tpush(cons_int(-1, -1));
   new_steps~tpush(cons_int(-1,  0));
-  new_steps~tpush(cons_int(-1,  1));
   new_steps~tpush(cons_int( 0, -1));
   new_steps~tpush(cons_int( 0,  1));
-  new_steps~tpush(cons_int( 1, -1));
   new_steps~tpush(cons_int( 1,  0));
+  new_steps~tpush(cons_int(-1, -1));
+  new_steps~tpush(cons_int(-1,  1));
+  new_steps~tpush(cons_int( 1, -1));
   new_steps~tpush(cons_int( 1,  1));
   steps = new_steps;
 
