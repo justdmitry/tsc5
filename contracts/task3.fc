@@ -37,7 +37,10 @@ cell migrate_one(cell old_storage);
 () recv_internal(int msg_value, int balance, cell in_msg_full, slice in_msg_body) impure {
   int expected_ver = in_msg_body~load_uint(32);            ;; Expected version
   ifnot (expected_ver) {
-    set_data(wrap_storage(1, get_data()));
+    set_data(begin_cell()
+            .store_uint(1, 32)
+            .store_ref(get_data())
+            .end_cell());
     return();
   }
 
